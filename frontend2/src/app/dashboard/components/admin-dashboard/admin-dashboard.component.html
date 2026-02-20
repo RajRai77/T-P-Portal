@@ -1,0 +1,556 @@
+<div class="dashboard-layout" *ngIf="!isLoading">
+  
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <h2>TCET <span>Command</span></h2>
+    </div>
+    
+    <nav class="nav-menu">
+      <a (click)="switchView('overview')" class="nav-item" [class.active]="currentView === 'overview'" style="cursor: pointer;">
+        <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> Overview
+      </a>
+      <a (click)="switchView('students')" class="nav-item" [class.active]="currentView === 'students'" style="cursor: pointer;">
+        <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg> Manage Students
+      </a>
+      <a (click)="switchView('internships')" class="nav-item" [class.active]="currentView === 'internships'" style="cursor: pointer;">
+        <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg> Job Drives
+      </a>
+      <a (click)="switchView('sessions')" class="nav-item" [class.active]="currentView === 'sessions'" style="cursor: pointer;">
+        <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg> Sessions
+      </a>
+      <!-- NEW: Contests and Notifications in Sidebar -->
+      <a (click)="switchView('contests')" class="nav-item" [class.active]="currentView === 'contests'" style="cursor: pointer;">
+        <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg> Contests
+      </a>
+      <a (click)="switchView('notifications')" class="nav-item" [class.active]="currentView === 'notifications'" style="cursor: pointer;">
+        <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg> Alerts
+      </a>
+      <a (click)="switchView('resources')" class="nav-item" [class.active]="currentView === 'resources'" style="cursor: pointer;">
+        <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg> Resources & Notes
+      </a>
+      <a (click)="switchView('profile')" class="nav-item" [class.active]="currentView === 'profile'" style="cursor: pointer;">
+        <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> My Profile
+      </a>
+      <a href="#" class="nav-item" *ngIf="isSuperAdmin">
+        <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg> Approvals
+        <span class="badge badge-open" style="margin-left:auto; padding: 2px 8px;" *ngIf="pendingApprovalsCount > 0">{{ pendingApprovalsCount }}</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <a (click)="logout()" class="nav-item logout" style="cursor: pointer;">
+        <svg class="icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg> Logout
+      </a>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    
+    <header class="topbar">
+      <div class="search-bar"><input type="text" placeholder="Search students, companies..."></div>
+      <div class="user-profile">
+        <div class="avatar admin-avatar">{{ getInitials(adminData?.name) }}</div>
+        <div class="user-info"><span class="name">{{ adminData?.name }}</span><span class="role">{{ adminData?.designation || 'TnP Admin' }}</span></div>
+      </div>
+    </header>
+
+    <div class="content-wrapper">
+      
+      <!-- ============================== -->
+      <!-- TAB 1: OVERVIEW SECTION        -->
+      <!-- ============================== -->
+      <div *ngIf="currentView === 'overview'">
+        <div class="welcome-section">
+          <h1>Admin Overview</h1>
+          <p>Monitor placement drives, student metrics, and pending system requests.</p>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon blue"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg></div>
+            <div class="metric-data"><h3>{{ totalStudents }}</h3><p>Total Students</p></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon green"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg></div>
+            <div class="metric-data"><h3>{{ activeInternshipsCount }}</h3><p>Active Job Drives</p></div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon purple"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>
+            <div class="metric-data"><h3>{{ totalSessions }}</h3><p>Scheduled Sessions</p></div>
+          </div>
+          <div class="metric-card" *ngIf="isSuperAdmin">
+            <div class="metric-icon orange"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div>
+            <div class="metric-data"><h3>{{ pendingApprovalsCount }}</h3><p>Pending Admin Requests</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- TAB 1.5: MANAGE STUDENTS       -->
+      <!-- ============================== -->
+      <div *ngIf="currentView === 'students'">
+        <div class="section-header" style="margin-bottom: 1.5rem;">
+          <div *ngIf="!selectedStudentId"><h1>Student Directory & Analytics</h1><p>Manage student profiles, analyze branch performance, and track placements.</p></div>
+          <div *ngIf="selectedStudentId"><button class="btn-text" (click)="closeStudentProfile()">&larr; Back to Directory</button><h1 style="margin-top: 0.5rem;">Student Profile: {{ selectedStudent?.name }}</h1></div>
+        </div>
+
+        <div *ngIf="!selectedStudentId" class="animate-fade-in">
+          <div class="metrics-grid" style="grid-template-columns: 1fr 1fr 2fr; margin-bottom: 2rem;">
+            <div class="metric-card"><div class="metric-icon blue"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg></div><div class="metric-data"><h3>{{ totalStudents }}</h3><p>Registered Accounts</p></div></div>
+            <div class="metric-card"><div class="metric-icon purple"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg></div><div class="metric-data"><h3>{{ avgCgpa }}</h3><p>Average College CGPA</p></div></div>
+            <div class="metric-card" style="align-items: flex-start; flex-direction: column;">
+              <h3 style="font-size: 1rem; color: var(--primary-navy); margin-bottom: 0.5rem;">Branch Distribution</h3>
+              <div class="branch-bars" style="width: 100%;">
+                <div *ngFor="let stat of branchStats.slice(0,3)" class="branch-bar-item">
+                  <div class="bar-label">{{ stat.branch }} ({{ stat.count }})</div>
+                  <div class="bar-track"><div class="bar-fill" [ngClass]="stat.branch" [style.width.%]="stat.percentage"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="filters-bar">
+            <input type="text" class="filter-input" placeholder="Search by name or email..." #searchInput (input)="applyStudentFilters(searchInput.value, branchSelect.value, yearSelect.value)">
+            <select class="filter-select" #branchSelect (change)="applyStudentFilters(searchInput.value, branchSelect.value, yearSelect.value)"><option value="">All Branches</option><option value="COMP">COMP</option><option value="IT">IT</option><option value="EXTC">EXTC</option><option value="MECH">MECH</option></select>
+            <select class="filter-select" #yearSelect (change)="applyStudentFilters(searchInput.value, branchSelect.value, yearSelect.value)"><option value="">All Years</option><option value="1">1st Year</option><option value="2">2nd Year</option><option value="3">3rd Year</option><option value="4">4th Year</option></select>
+          </div>
+
+          <div class="table-container">
+            <table class="clean-table" *ngIf="filteredStudents.length > 0; else noStudents">
+              <thead><tr><th>Student Info</th><th>Roll No</th><th>Branch & Year</th><th>CGPA</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let student of filteredStudents">
+                  <td><strong>{{ student.name }}</strong><br><span style="font-size: 0.85rem; color: var(--text-muted);">{{ student.email }}</span></td>
+                  <td>{{ student.tnprollNo || 'N/A' }}</td>
+                  <td><span class="badge badge-open">{{ student.branch }} - Yr {{ student.year }}</span></td>
+                  <td><strong>{{ student.cgpa | number:'1.2-2' }}</strong></td>
+                  <td><button class="btn-small btn-outline" style="margin-right: 0.5rem;" (click)="viewStudentProfile(student.id)">View Profile</button><button *ngIf="isSuperAdmin" class="btn-small btn-outline" style="color: #DC2626; border-color: #DC2626;" (click)="deleteStudent(student.id)">Remove</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <ng-template #noStudents><div style="padding: 3rem; text-align: center; color: var(--text-muted);">No students match your criteria.</div></ng-template>
+          </div>
+        </div>
+
+        <div *ngIf="selectedStudentId" class="animate-fade-in">
+          <div *ngIf="!isFetchingStudentProfile && selectedStudent">
+            <div class="profile-card">
+              <div class="profile-avatar">{{ getInitials(selectedStudent.name) }}</div>
+              <div class="profile-details" style="width: 100%;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 1rem;">
+                  <div>
+                    <h2>{{ selectedStudent.name }}</h2>
+                    <p style="margin-bottom:0.5rem">{{ selectedStudent.email }} | Roll No: {{ selectedStudent.tnprollNo || 'N/A' }} | Phone: {{ selectedStudent.phone || 'N/A' }}</p>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                      <a *ngIf="selectedStudent.linkedinUrl" [href]="selectedStudent.linkedinUrl" target="_blank" class="badge badge-open" style="text-decoration:none">🔗 LinkedIn</a>
+                      <a *ngIf="selectedStudent.githubUrl" [href]="selectedStudent.githubUrl" target="_blank" class="badge badge-open" style="text-decoration:none">💻 GitHub</a>
+                      <a *ngIf="selectedStudent.resumeUrl" [href]="selectedStudent.resumeUrl" target="_blank" class="badge" style="background:#dbeafe; color:#1e40af; text-decoration:none">📄 Resume</a>
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 0.5rem; flex-wrap:wrap">
+                    <span class="badge badge-open">{{ selectedStudent.branch }}</span>
+                    <span class="badge badge-open">Year {{ selectedStudent.year }}</span>
+                    <span class="badge" style="background: #FFF7ED; color: #EA580C;">CGPA: {{ selectedStudent.cgpa | number:'1.2-2' }}</span>
+                  </div>
+                </div>
+                
+                <div *ngIf="selectedStudent.aboutMe" style="background:var(--bg-body); padding:1rem; border-radius:8px; margin-bottom:1.5rem">
+                  <h4 style="margin:0 0 0.5rem; color:var(--text-muted); font-size:0.8rem">ABOUT</h4>
+                  <p style="margin:0; font-size:0.9rem; line-height:1.6">{{selectedStudent.aboutMe}}</p>
+                </div>
+
+                <div *ngIf="selectedStudent.skills" style="margin-bottom:1.5rem">
+                  <h4 style="margin:0 0 0.5rem; color:var(--text-muted); font-size:0.8rem">SKILLS</h4>
+                  <div style="display:flex; gap:0.5rem; flex-wrap:wrap">
+                    <span *ngFor="let s of selectedStudent.skills.split(',')" class="badge badge-open">{{s.trim()}}</span>
+                  </div>
+                </div>
+
+                <!-- Portfolio Integration -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem">
+                  <div>
+                    <h4 style="margin:0 0 1rem; color:var(--primary-navy)">Experience</h4>
+                    <div *ngFor="let exp of selectedStudent.experiencesList" style="background:var(--bg-body); padding:1rem; border-radius:8px; margin-bottom:1rem; border-left:3px solid var(--primary-color)">
+                      <strong style="display:block; font-size:1rem">{{exp.role}}</strong>
+                      <span style="font-size:0.9rem; color:var(--primary-color); display:block; margin-bottom:0.25rem">{{exp.company}}</span>
+                      <span style="font-size:0.8rem; color:var(--text-muted)">{{exp.duration}}</span>
+                      <p style="margin:0.5rem 0 0; font-size:0.85rem">{{exp.description}}</p>
+                    </div>
+                    <div *ngIf="!selectedStudent.experiencesList?.length" style="color:var(--text-muted); font-size:0.9rem">No experiences added.</div>
+                  </div>
+                  <div>
+                    <h4 style="margin:0 0 1rem; color:var(--primary-navy)">Projects</h4>
+                    <div *ngFor="let proj of selectedStudent.projectsList" style="background:var(--bg-body); padding:1rem; border-radius:8px; margin-bottom:1rem; border-left:3px solid var(--accent-color)">
+                      <div style="display:flex; justify-content:space-between; align-items:flex-start">
+                        <strong style="display:block; font-size:1rem">{{proj.title}}</strong>
+                        <a *ngIf="proj.link" [href]="proj.link" target="_blank" style="font-size:0.8rem; color:var(--accent-color); text-decoration:none">View →</a>
+                      </div>
+                      <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.5rem">Stack: {{proj.techStack}}</span>
+                      <p style="margin:0; font-size:0.85rem">{{proj.description}}</p>
+                    </div>
+                    <div *ngIf="!selectedStudent.projectsList?.length" style="color:var(--text-muted); font-size:0.9rem">No projects added.</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- TAB 2: INTERNSHIPS SECTION     -->
+      <!-- ============================== -->
+      <div *ngIf="currentView === 'internships'">
+        <div class="section-header" style="margin-bottom: 2rem;">
+          <div *ngIf="!selectedInternshipId"><h1>Job Drives & Internships</h1><p>Manage campus recruitment opportunities.</p></div>
+          <div *ngIf="selectedInternshipId"><button class="btn-text" (click)="closeApplicants()">&larr; Back to Job Drives</button><h1 style="margin-top: 0.5rem;">Candidates for {{ currentInternshipName }}</h1></div>
+          <button class="btn btn-primary" (click)="toggleInternshipForm()" *ngIf="!selectedInternshipId">{{ showInternshipForm ? 'Cancel Creation' : '+ Post New Opportunity' }}</button>
+        </div>
+
+        <div class="form-panel" *ngIf="showInternshipForm && !selectedInternshipId">
+          <h3 style="margin-bottom: 1.5rem; color: var(--primary-navy);">Post New Internship</h3>
+          <form [formGroup]="internshipForm" (ngSubmit)="submitInternship()">
+            <div class="form-grid">
+              <div class="form-group"><label>Company Name</label><input type="text" formControlName="company"></div>
+              <div class="form-group"><label>Job Role</label><input type="text" formControlName="role"></div>
+              <div class="form-group"><label>Stipend / CTC</label><input type="text" formControlName="stipend"></div>
+              <div class="form-group"><label>Eligibility Criteria</label><input type="text" formControlName="eligibility"></div>
+              <div class="form-group"><label>Application Deadline</label><input type="date" formControlName="deadline"></div>
+              <div class="form-group"><label>Initial Status</label><select formControlName="status"><option value="OPEN">Open for Applications</option><option value="CLOSED">Closed</option></select></div>
+              <div class="form-group full-width"><label>Full Job Description</label><textarea formControlName="description" rows="4"></textarea></div>
+            </div>
+            <button type="submit" class="btn btn-primary" [disabled]="isPostingJob" style="margin-top: 1rem;">{{ isPostingJob ? 'Publishing...' : 'Publish Job Drive' }}</button>
+          </form>
+        </div>
+
+        <div class="table-container" *ngIf="!showInternshipForm && !selectedInternshipId">
+          <table class="clean-table" *ngIf="allInternships.length > 0; else noJobs">
+            <thead><tr><th>Company & Role</th><th>Stipend</th><th>Deadline</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let job of allInternships">
+                <td><strong>{{ job.company }}</strong><br><span style="font-size: 0.85rem; color: var(--text-muted);">{{ job.role }}</span></td>
+                <td>{{ job.stipend }}</td><td>{{ job.deadline | date:'mediumDate' }}</td>
+                <td><span class="badge" [ngClass]="job.status === 'OPEN' ? 'badge-open' : 'badge-closed'">{{ job.status }}</span></td>
+                <td><button class="btn-small btn-outline" (click)="viewCandidates(job)">View Candidates</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <ng-template #noJobs><div style="padding: 3rem; text-align: center; color: var(--text-muted);">No job drives have been posted yet.</div></ng-template>
+        </div>
+
+        <div class="table-container animate-fade-in" *ngIf="selectedInternshipId">
+          <div *ngIf="isFetchingApplicants" style="padding: 3rem; text-align: center;">Loading candidates...</div>
+          <table class="clean-table" *ngIf="!isFetchingApplicants && applicantsList.length > 0; else noApplicants">
+            <thead><tr><th>Student Name</th><th>Email Address</th><th>Branch</th><th>Applied Date</th><th>Current Status</th><th>Management</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let app of applicantsList">
+                <td><strong>{{ app.studentName }}</strong></td><td>{{ app.studentEmail }}</td><td>{{ app.studentBranch }}</td><td>{{ app.appliedAt | date:'shortDate' }}</td>
+                <td><span class="badge" [ngClass]="{'badge-open': app.applicationStatus === 'PENDING' || app.applicationStatus === 'APPLIED', 'badge-success': app.applicationStatus === 'SHORTLISTED', 'badge-closed': app.applicationStatus === 'REJECTED'}">{{ app.applicationStatus | uppercase }}</span></td>
+                <td>
+                  <div style="display: flex; gap: 0.5rem;" *ngIf="app.applicationStatus === 'PENDING' || app.applicationStatus === 'APPLIED'; else processedState">
+                    <button class="btn-small btn-success" (click)="updateCandidateStatus(app, 'SHORTLISTED')">Shortlist</button>
+                    <button class="btn-small btn-outline" style="color: #DC2626; border-color: #DC2626;" (click)="updateCandidateStatus(app, 'REJECTED')">Reject</button>
+                  </div>
+                  <ng-template #processedState><span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">Processed</span></ng-template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <ng-template #noApplicants><div *ngIf="!isFetchingApplicants" style="padding: 3rem; text-align: center; color: var(--text-muted);">No students have applied for this drive yet.</div></ng-template>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- TAB 2.5: SESSIONS (NEW!)       -->
+      <!-- ============================== -->
+      <div *ngIf="currentView === 'sessions'">
+        <div class="section-header" style="margin-bottom: 2rem;">
+          <div *ngIf="!selectedSessionId"><h1>Sessions & Seminars</h1><p>Schedule guest lectures, online webinars, and offline workshops.</p></div>
+          <div *ngIf="selectedSessionId"><button class="btn-text" (click)="closeSessionRegistrations()">&larr; Back to Sessions</button><h1 style="margin-top: 0.5rem;">Registrations: {{ currentSessionName }}</h1></div>
+          <button class="btn btn-primary" (click)="toggleSessionForm()" *ngIf="!selectedSessionId">{{ showSessionForm ? 'Cancel Scheduling' : '+ Schedule Session' }}</button>
+        </div>
+
+        <div class="form-panel animate-fade-in" *ngIf="showSessionForm && !selectedSessionId">
+          <h3 style="margin-bottom: 1.5rem; color: var(--primary-navy);">Schedule New Session</h3>
+          <form [formGroup]="sessionForm" (ngSubmit)="submitSession()">
+            <div class="form-grid">
+              <div class="form-group full-width"><label>Session Title</label><input type="text" formControlName="title"></div>
+              <div class="form-group"><label>Speaker / Guest Name</label><input type="text" formControlName="speaker"></div>
+              <div class="form-group"><label>Date & Time</label><input type="datetime-local" formControlName="sessionDatetime"></div>
+              <div class="form-group"><label>Target Branch</label><select formControlName="targetBranch"><option value="ALL">All Branches</option><option value="COMP">COMP</option><option value="IT">IT</option></select></div>
+              <div class="form-group"><label>Target Year</label><select formControlName="targetYear"><option [ngValue]="0">All Years</option><option [ngValue]="1">1st Year</option><option [ngValue]="2">2nd Year</option><option [ngValue]="3">3rd Year</option></select></div>
+              <div class="form-group full-width"><label>Venue or Online Link</label><input type="text" formControlName="joinUrl"></div>
+              <div class="form-group full-width"><label>Instructions / Description</label><textarea formControlName="description" rows="3"></textarea></div>
+            </div>
+            <button type="submit" class="btn btn-primary" [disabled]="isPostingSession" style="margin-top: 1rem;">{{ isPostingSession ? 'Scheduling...' : 'Confirm & Schedule' }}</button>
+          </form>
+        </div>
+
+        <div class="table-container" *ngIf="!showSessionForm && !selectedSessionId">
+          <table class="clean-table" *ngIf="allSessions.length > 0; else noSessions">
+            <thead><tr><th>Session Info</th><th>Date & Time</th><th>Target Audience</th><th>Venue / Link</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let session of allSessions">
+                <td><strong>{{ session.title }}</strong><br><span style="font-size: 0.85rem; color: var(--text-muted);">By {{ session.speaker }}</span></td>
+                <td>{{ session.sessionDatetime | date:'medium' }}</td>
+                <td><span class="badge badge-open">{{ session.targetBranch }} (Yr: {{ session.targetYear === 0 ? 'All' : session.targetYear }})</span></td>
+                <td style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ session.joinUrl }}</td>
+                <td><button class="btn-small btn-outline" style="margin-right: 0.5rem;" (click)="viewSessionRegistrations(session)">View Registrations</button><button class="btn-small btn-outline" style="color: #DC2626; border-color: #DC2626;" (click)="deleteSession(session.id)">Cancel</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <ng-template #noSessions><div style="padding: 3rem; text-align: center; color: var(--text-muted);">No sessions are currently scheduled.</div></ng-template>
+        </div>
+
+        <div *ngIf="selectedSessionId" class="animate-fade-in">
+          <div *ngIf="!isFetchingSessionRegistrations">
+            <div class="table-container">
+              <table class="clean-table" *ngIf="sessionRegistrations.length > 0; else noSessionRegs">
+                <thead><tr><th>Student Name</th><th>Email Address</th><th>Branch</th><th>Registration Date</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr *ngFor="let reg of sessionRegistrations">
+                    <td><strong>{{ reg.studentName }}</strong></td><td>{{ reg.studentEmail }}</td><td><span class="badge badge-open">{{ reg.studentBranch }}</span></td><td>{{ reg.registeredAt | date:'short' }}</td><td><span class="badge badge-success">{{ reg.status || 'REGISTERED' }}</span></td>
+                  </tr>
+                </tbody>
+              </table>
+              <ng-template #noSessionRegs><div style="padding: 3rem; text-align: center; color: var(--text-muted);">No students have registered for this session yet.</div></ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- TAB: CONTESTS (NEW)            -->
+      <!-- ============================== -->
+      <div *ngIf="currentView === 'contests'">
+        <div class="section-header" style="margin-bottom: 2rem;">
+          <div><h1>Hackathons & Contests</h1><p>Promote coding challenges and hackathons.</p></div>
+          <button class="btn btn-primary" (click)="toggleContestForm()">{{ showContestForm ? 'Cancel' : '+ Add Contest' }}</button>
+        </div>
+
+        <div class="form-panel animate-fade-in" *ngIf="showContestForm">
+          <h3 style="margin-bottom: 1.5rem; color: var(--primary-navy);">Post New Contest</h3>
+          <form [formGroup]="contestForm" (ngSubmit)="submitContest()">
+            <div class="form-grid">
+              <div class="form-group full-width"><label>Contest Title</label><input type="text" formControlName="title"></div>
+              <div class="form-group"><label>Platform (e.g. LeetCode)</label><input type="text" formControlName="platform"></div>
+              <div class="form-group"><label>Contest Link</label><input type="url" formControlName="contestUrl"></div>
+              <div class="form-group"><label>Start Date/Time</label><input type="datetime-local" formControlName="startDatetime"></div>
+              <div class="form-group"><label>End Date/Time</label><input type="datetime-local" formControlName="endDatetime"></div>
+              <div class="form-group full-width"><label>Description</label><textarea formControlName="description" rows="2"></textarea></div>
+            </div>
+            <button type="submit" class="btn btn-primary" [disabled]="isPostingContest" style="margin-top: 1rem;">{{ isPostingContest ? 'Posting...' : 'Publish Contest' }}</button>
+          </form>
+        </div>
+
+        <div class="table-container" *ngIf="!showContestForm">
+          <table class="clean-table" *ngIf="allContests.length > 0; else noContests">
+            <thead><tr><th>Contest Name</th><th>Platform</th><th>Start Time</th><th>End Time</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let c of allContests">
+                <td><strong>{{ c.title }}</strong></td><td><span class="badge badge-open">{{ c.platform }}</span></td>
+                <td>{{ c.startDatetime | date:'short' }}</td><td>{{ c.endDatetime | date:'short' }}</td>
+                <td>
+                  <a [href]="c.contestUrl" target="_blank" class="btn-small btn-outline" style="text-decoration:none; margin-right:0.5rem;">Link</a>
+                  <button class="btn-small btn-outline" style="color:#DC2626; border-color:#DC2626;" (click)="deleteContest(c.id)">Delete</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <ng-template #noContests><div style="padding:2rem;text-align:center;color:var(--text-muted);">No contests added yet.</div></ng-template>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- TAB: NOTIFICATIONS (NEW)       -->
+      <!-- ============================== -->
+      <div *ngIf="currentView === 'notifications'">
+        <div class="section-header" style="margin-bottom: 2rem;">
+          <div><h1>Announcements & Alerts</h1><p>Send targetted notifications to students.</p></div>
+          <button class="btn btn-primary" (click)="toggleNotificationForm()">{{ showNotificationForm ? 'Cancel' : '+ Send Alert' }}</button>
+        </div>
+
+        <div class="form-panel animate-fade-in" *ngIf="showNotificationForm">
+          <h3 style="margin-bottom: 1.5rem; color: var(--primary-navy);">Send Notification</h3>
+          <form [formGroup]="notificationForm" (ngSubmit)="submitNotification()">
+            <div class="form-grid">
+              <div class="form-group full-width"><label>Title/Subject</label><input type="text" formControlName="title"></div>
+              <div class="form-group">
+                <label>Target Branch</label>
+                <select formControlName="targetBranch"><option value="ALL">All Branches</option><option value="COMP">COMP</option><option value="IT">IT</option></select>
+              </div>
+              <div class="form-group">
+                <label>Target Year</label>
+                <select formControlName="targetYear"><option [ngValue]="0">All Years</option><option [ngValue]="3">3rd Year</option><option [ngValue]="4">4th Year</option></select>
+              </div>
+              <div class="form-group"><label>Category</label><select formControlName="category"><option value="GENERAL">General</option><option value="URGENT">Urgent Deadline</option><option value="RESULTS">Results</option></select></div>
+              <div class="form-group"><label>Optional Link</label><input type="url" formControlName="link"></div>
+              <div class="form-group full-width"><label>Message Content</label><textarea formControlName="content" rows="3"></textarea></div>
+            </div>
+            <button type="submit" class="btn btn-primary" [disabled]="isPostingNotification" style="margin-top: 1rem;">Send Notification</button>
+          </form>
+        </div>
+
+        <div class="table-container" *ngIf="!showNotificationForm">
+          <table class="clean-table" *ngIf="allNotifications.length > 0; else noAlerts">
+            <thead><tr><th>Subject</th><th>Target Audience</th><th>Category</th><th>Date Sent</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr *ngFor="let n of allNotifications">
+                <td><strong>{{ n.title }}</strong><br><span style="font-size:0.85rem;color:var(--text-muted)">{{ n.content | slice:0:50 }}...</span></td>
+                <td><span class="badge badge-open">{{ n.targetBranch }} (Yr: {{ n.targetYear===0?'All':n.targetYear }})</span></td>
+                <td><span class="badge" [ngClass]="n.category==='URGENT'?'badge-closed':'badge-success'">{{ n.category }}</span></td>
+                <td>{{ n.createdAt | date:'shortDate' }}</td>
+                <td><button class="btn-small btn-outline" style="color:#DC2626; border-color:#DC2626;" (click)="deleteNotification(n.id)">Delete</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <ng-template #noAlerts><div style="padding:2rem;text-align:center;color:var(--text-muted);">No announcements sent.</div></ng-template>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- TAB 3: RESOURCES & NOTES       -->
+      <!-- ============================== -->
+      <div *ngIf="currentView === 'resources'">
+        <div class="section-header" style="margin-bottom: 2rem;">
+          <div><h1>Materials Repository</h1><p>Manage Global Resources and Branch-Specific Notes.</p></div>
+          <div style="display: flex; gap: 1rem;">
+            <button class="btn btn-outline" (click)="toggleNoteForm()">{{ showNoteForm ? 'Cancel Note' : '+ Upload Note' }}</button>
+            <button class="btn btn-primary" (click)="toggleResourceForm()">{{ showResourceForm ? 'Cancel Resource' : '+ Add Resource' }}</button>
+          </div>
+        </div>
+
+        <!-- FORM: GLOBAL RESOURCE -->
+        <div class="form-panel animate-fade-in" *ngIf="showResourceForm">
+          <h3 style="margin-bottom: 1.5rem; color: var(--primary-navy);">Add Global Resource</h3>
+          <form [formGroup]="resourceForm" (ngSubmit)="submitResource()">
+            <div class="form-grid">
+              <div class="form-group"><label>Resource Title</label><input type="text" formControlName="title"></div>
+              <div class="form-group"><label>Type</label><select formControlName="type"><option value="Link">Web Link</option><option value="Drive">Google Drive Folder</option><option value="PDF">PDF Document (File Upload)</option><option value="Video">Video Lecture</option></select></div>
+              <div class="form-group full-width" *ngIf="resourceForm.get('type')?.value !== 'PDF'"><label>Access URL</label><input type="url" formControlName="fileUrl"></div>
+              <div class="form-group full-width" *ngIf="resourceForm.get('type')?.value === 'PDF'"><label>Upload PDF Document</label><input type="file" (change)="onResourceFileSelected($event)" accept=".pdf" style="background: white;"></div>
+              <div class="form-group full-width"><label>Short Description</label><textarea formControlName="description" rows="2"></textarea></div>
+            </div>
+            <button type="submit" class="btn btn-primary" [disabled]="isPostingMaterial" style="margin-top: 1rem;">{{ isPostingMaterial ? 'Saving...' : 'Save Resource' }}</button>
+          </form>
+        </div>
+
+        <!-- FORM: BRANCH NOTE -->
+        <div class="form-panel animate-fade-in" *ngIf="showNoteForm">
+          <h3 style="margin-bottom: 1.5rem; color: var(--primary-navy);">Upload Branch Study Note</h3>
+          <form [formGroup]="noteForm" (ngSubmit)="submitNote()">
+            <div class="form-grid">
+              <div class="form-group full-width"><label>Note Title</label><input type="text" formControlName="title"></div>
+              <div class="form-group"><label>Target Branch</label><select formControlName="targetBranch"><option value="ALL">All Branches</option><option value="COMP">COMP</option><option value="IT">IT</option></select></div>
+              <div class="form-group"><label>Target Year</label><select formControlName="targetYear"><option [ngValue]="1">First Year (FE)</option><option [ngValue]="2">Second Year (SE)</option><option [ngValue]="3">Third Year (TE)</option></select></div>
+              <div class="form-group full-width"><label>Upload Document</label><input type="file" (change)="onNoteFileSelected($event)" accept=".pdf,.doc,.docx" style="background: white;"></div>
+              <div class="form-group full-width"><label>Description</label><textarea formControlName="description" rows="2"></textarea></div>
+            </div>
+            <button type="submit" class="btn btn-primary" [disabled]="isPostingMaterial" style="margin-top: 1rem;">{{ isPostingMaterial ? 'Uploading...' : 'Publish Note' }}</button>
+          </form>
+        </div>
+
+        <!-- LISTS -->
+        <div *ngIf="!showResourceForm && !showNoteForm">
+          <div class="section-header" style="margin-bottom: 1rem;"><h2>Global TnP Resources</h2></div>
+          <div class="table-container" style="margin-bottom: 3rem;">
+            <table class="clean-table" *ngIf="allResources.length > 0; else noResources">
+              <thead><tr><th>Title</th><th>Type</th><th>Description</th><th>Date Added</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let res of allResources">
+                  <td><strong>{{ res.title }}</strong></td><td><span class="badge badge-open">{{ res.type }}</span></td>
+                  <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ res.description }}</td>
+                  <td>{{ res.createdAt | date:'mediumDate' }}</td>
+                  <td><a [href]="res.fileUrl" target="_blank" class="btn-small btn-outline" style="text-decoration:none; margin-right: 0.5rem;">View</a><button class="btn-small btn-outline" style="color: #DC2626; border-color: #DC2626;" (click)="deleteResource(res.id)">Delete</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <ng-template #noResources><div style="padding: 2rem; text-align: center; color: var(--text-muted);">No global resources added yet.</div></ng-template>
+          </div>
+
+          <div class="section-header" style="margin-bottom: 1rem;"><h2>Branch Specific Study Notes</h2></div>
+          <div class="table-container">
+            <table class="clean-table" *ngIf="allNotes.length > 0; else noNotes">
+              <thead><tr><th>Note Title</th><th>Target Audience</th><th>Description</th><th>Date Added</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let note of allNotes">
+                  <td><strong>{{ note.title }}</strong></td><td><span class="badge badge-open">{{ note.targetBranch }} - Year {{ note.targetYear }}</span></td>
+                  <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ note.description }}</td>
+                  <td>{{ note.uploadedAt | date:'mediumDate' }}</td>
+                  <td><a [href]="note.fileUrl" target="_blank" class="btn-small btn-outline" style="text-decoration:none; margin-right: 0.5rem;">Download</a><button class="btn-small btn-outline" style="color: #DC2626; border-color: #DC2626;" (click)="deleteNote(note.id)">Delete</button></td>
+                </tr>
+              </tbody>
+            </table>
+            <ng-template #noNotes><div style="padding: 2rem; text-align: center; color: var(--text-muted);">No branch study notes uploaded yet.</div></ng-template>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================== -->
+      <!-- TAB: PROFILE (NEW)             -->
+      <!-- ============================== -->
+      <div *ngIf="currentView === 'profile'">
+        <div class="section-header" style="margin-bottom: 2rem;">
+          <div><h1>My Admin Profile</h1><p>Update your contact and public information visible to students.</p></div>
+        </div>
+
+        <div class="form-panel animate-fade-in" style="max-width: 800px; margin: 0 auto;">
+          <div style="display:flex; gap:2rem; align-items:flex-start;">
+            
+            <div style="flex:1">
+              <h3 style="margin-bottom: 1.5rem; color: var(--primary-navy);">Edit Details</h3>
+              <form (ngSubmit)="saveAdminProfile()">
+                <div class="form-group full-width">
+                  <label>Full Name</label>
+                  <input type="text" [(ngModel)]="editAdminName" name="name" class="ai-input w-full">
+                </div>
+                <div class="form-group full-width">
+                  <label>Phone / WhatsApp Number</label>
+                  <input type="tel" [(ngModel)]="editAdminPhone" name="phone" class="ai-input w-full" placeholder="+91 9876543210">
+                </div>
+                <div class="form-group full-width">
+                  <label>LinkedIn URL</label>
+                  <input type="url" [(ngModel)]="editAdminLinkedin" name="linkedin" class="ai-input w-full" placeholder="https://linkedin.com/in/yourname">
+                </div>
+                <div class="form-group full-width">
+                  <label>Profile Picture URL</label>
+                  <input type="url" [(ngModel)]="editAdminProfilePicUrl" name="profilePic" class="ai-input w-full" placeholder="https://example.com/photo.jpg">
+                </div>
+                <div class="form-group full-width">
+                  <label>About Me / Bio</label>
+                  <textarea [(ngModel)]="editAdminAboutMe" name="aboutMe" class="ai-input w-full" rows="4" placeholder="Brief professional description..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary" [disabled]="isSavingAdminProfile" style="margin-top: 1rem;">
+                  {{ isSavingAdminProfile ? 'Saving...' : 'Save Profile Changes' }}
+                </button>
+              </form>
+            </div>
+
+            <div style="width: 280px; background:var(--bg-main); border:1px solid var(--border-color); border-radius:12px; padding:1.5rem; text-align:center">
+              <h4 style="margin:0 0 1.5rem; color:var(--text-muted); font-size:0.8rem; text-transform:uppercase">Public Preview</h4>
+              <div style="width:80px; height:80px; background:var(--primary-color); color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:700; margin:0 auto 1rem">
+                <ng-container *ngIf="!editAdminProfilePicUrl">{{ (editAdminName || adminData?.name)?.charAt(0) }}</ng-container>
+                <img *ngIf="editAdminProfilePicUrl" [src]="editAdminProfilePicUrl" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+              </div>
+              <h3 style="margin:0 0 0.25rem">{{ editAdminName || adminData?.name }}</h3>
+              <p style="color:var(--text-muted); font-size:0.9rem; margin:0 0 1rem; font-weight:600">{{ adminData?.designation }}</p>
+              
+              <div style="display:flex; flex-direction:column; gap:0.5rem">
+                <div *ngIf="editAdminPhone" style="font-size:0.8rem; background:#dcfce7; color:#166534; padding:0.5rem; border-radius:4px; font-weight:600">
+                  💬 Direct WhatsApp Enabled
+                </div>
+                <div *ngIf="editAdminLinkedin" style="font-size:0.8rem; background:#dbeafe; color:#1e40af; padding:0.5rem; border-radius:4px; font-weight:600">
+                  🔗 LinkedIn Linked
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
