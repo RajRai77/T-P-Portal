@@ -1,0 +1,21 @@
+# IDEs
+.vscode/
+.idea/
+
+# Node
+node_modules/
+dist/
+.angular/
+
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+
+# Logs and environment
+*.log
+.env
+
+# MacOS
+.DS_Store
