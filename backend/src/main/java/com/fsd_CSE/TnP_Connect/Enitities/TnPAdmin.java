@@ -1,5 +1,6 @@
 package com.fsd_CSE.TnP_Connect.Enitities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
@@ -49,26 +50,32 @@ public class TnPAdmin {
     private OffsetDateTime createdAt;
 
 
+    @JsonIgnore
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     @OneToMany(mappedBy = "createdByAdmin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private java.util.List<Internship> createdInternships;
 
+    @JsonIgnore
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     @OneToMany(mappedBy = "postedByAdmin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private java.util.List<Notification> createdNotifications;
 
+    @JsonIgnore
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     @OneToMany(mappedBy = "createdByAdmin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private java.util.List<Resource> createdResources;
 
+    @JsonIgnore
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     @OneToMany(mappedBy = "createdByAdmin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private java.util.List<Session> createdSessions;
 
+    @JsonIgnore
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     @OneToMany(mappedBy = "uploadedByAdmin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private java.util.List<Notes> uploadedNotes;
 
+    @JsonIgnore
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
     @OneToMany(mappedBy = "createdByAdmin", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private java.util.List<Contest> createdContests;
