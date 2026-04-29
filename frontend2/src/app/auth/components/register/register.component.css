@@ -205,3 +205,145 @@ input.ng-invalid.ng-touched, select.ng-invalid.ng-touched {
   color: var(--primary-navy);
   box-shadow: var(--shadow-subtle);
 }
+
+/* ======================================== */
+/* Step Indicator                           */
+/* ======================================== */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background: #E2E8F0;
+  color: var(--text-muted);
+  transition: all 0.3s;
+}
+
+.step.active .step-num {
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.step.done .step-num {
+  background: #16A34A;
+  color: #fff;
+}
+
+.step-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.step.active .step-label {
+  color: var(--accent-blue);
+}
+
+.step.done .step-label {
+  color: #16A34A;
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: #E2E8F0;
+  margin: 0 8px;
+}
+
+/* ======================================== */
+/* OTP Section                              */
+/* ======================================== */
+.otp-section {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.otp-hint {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.otp-input {
+  font-size: 1.8rem !important;
+  letter-spacing: 12px !important;
+  font-weight: 700 !important;
+  text-align: center !important;
+  padding: 1rem !important;
+  border: 2px dashed #2563EB !important;
+  border-radius: var(--border-radius-sm);
+}
+
+.otp-input:focus {
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+.resend-link {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--accent-blue);
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.link-btn:disabled {
+  color: var(--text-muted);
+  cursor: default;
+  text-decoration: none;
+}
+
+/* ======================================== */
+/* Verified Email Badge                     */
+/* ======================================== */
+.verified-email-badge {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  color: #15803D;
+  border-radius: var(--border-radius-sm);
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+.verified-email-badge span {
+  font-weight: 700;
+}
+
+.field-hint {
+  margin-top: 4px;
+  font-size: 0.85rem;
+}

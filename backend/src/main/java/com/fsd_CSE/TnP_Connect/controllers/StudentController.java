@@ -25,7 +25,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -48,6 +50,13 @@ public class StudentController {
     private com.fsd_CSE.TnP_Connect.util.JwtUtil jwtUtil;
     @Autowired
     private StudentRepository studentRepository;
+    @Autowired
+    private com.fsd_CSE.TnP_Connect.util.EmailService emailService;
+    @Autowired
+    private com.fsd_CSE.TnP_Connect.util.OtpStore otpStore;
+
+    // Tracks emails that have been OTP-verified during the current registration flow
+    private final Set<String> verifiedEmails = ConcurrentHashMap.newKeySet();
 
     @Value("${file.upload-dir:./uploads}")
     private String uploadDir;
@@ -332,6 +341,132 @@ public class StudentController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+
+    // ================================================================
+    // OTP ENDPOINTS — STUDENT EMAIL VERIFICATION (Registration)
+    // ================================================================
+
+    /**
+     * Step 1 of registration: send OTP to a @tcetmumbai.in email.
+     * Request body: { "email": "student@tcetmumbai.in" }
+     */
+    @PostMapping("/send-otp")
+    public ResponseEntity<Map<String, String>> sendRegistrationOtp(
+            @RequestBody Map<String, String> body) {
+
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required.");
+        }
+        if (!email.toLowerCase().endsWith("@tcetmumbai.in")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Only @tcetmumbai.in email addresses are allowed for student registration.");
+        }
+        if (studentRepository.findByEmail(email).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "This email is already registered. Please log in.");
+        }
+
+        String otp = otpStore.generateAndStore(email);
+        emailService.sendStudentRegistrationOtp(email, otp);
+        log.info("Registration OTP sent to {}", email);
+
+        return ResponseEntity.ok(Map.of("message", "OTP sent to " + email + ". Valid for 10 minutes."));
+    }
+
+    /**
+     * Step 2 of registration: verify the OTP.
+     * Request body: { "email": "student@tcetmumbai.in", "otp": "123456" }
+     */
+    @PostMapping("/verify-otp")
+    public ResponseEntity<Map<String, String>> verifyRegistrationOtp(
+            @RequestBody Map<String, String> body) {
+
+        String email = body.get("email");
+        String otp   = body.get("otp");
+
+        if (email == null || otp == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "email and otp are required.");
+        }
+        if (!otpStore.validateAndConsume(email, otp)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "Invalid or expired OTP. Please request a new one.");
+        }
+
+        verifiedEmails.add(email.toLowerCase());
+        log.info("Email {} verified successfully for registration.", email);
+
+        return ResponseEntity.ok(Map.of("message", "Email verified. You may now complete registration."));
+    }
+
+    // ================================================================
+    // FORGOT PASSWORD — STUDENT
+    // ================================================================
+
+    /**
+     * Step 1: send OTP to registered student email.
+     * Request body: { "email": "student@tcetmumbai.in" }
+     */
+    @PostMapping("/forgot-password/send-otp")
+    public ResponseEntity<Map<String, String>> forgotPasswordSendOtp(
+            @RequestBody Map<String, String> body) {
+
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required.");
+        }
+
+        Student student = studentRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No account found with this email address."));
+
+        String otp = otpStore.generateAndStore(email);
+        emailService.sendPasswordResetOtp(email, student.getName() != null ? student.getName() : "Student", otp);
+        log.info("Password reset OTP sent to {}", email);
+
+        return ResponseEntity.ok(Map.of("message", "OTP sent to " + email + ". Valid for 10 minutes."));
+    }
+
+    /**
+     * Step 2: verify OTP and set new password.
+     * Request body: { "email": "...", "otp": "123456", "newPassword": "..." }
+     */
+    @PostMapping("/forgot-password/reset")
+    public ResponseEntity<Map<String, String>> forgotPasswordReset(
+            @RequestBody Map<String, String> body) {
+
+        String email       = body.get("email");
+        String otp         = body.get("otp");
+        String newPassword = body.get("newPassword");
+
+        if (email == null || otp == null || newPassword == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "email, otp, and newPassword are required.");
+        }
+        if (newPassword.length() < 6) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Password must be at least 6 characters.");
+        }
+        if (!otpStore.validateAndConsume(email, otp)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "Invalid or expired OTP.");
+        }
+
+        Student student = studentRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Student not found."));
+
+        student.setPasswordHash(simpleHash(newPassword));
+        studentRepository.save(student);
+
+        log.info("Password reset successfully for student email: {}", email);
+        return ResponseEntity.ok(Map.of("message", "Password reset successfully. Please log in."));
+    }
+
+    // ================================================================
+    // Existing Change-Password (kept for backward compatibility)
+    // ================================================================
+
     //  12: Password Patch
     @PatchMapping("/{id}/change-password")
     public ResponseEntity<Map<String, String>> changePassword(
@@ -354,15 +489,15 @@ public class StudentController {
                     "Request body must contain newPassword and otp.");
         }
 
-       //Hardcoded OTP validation
-        if (!"123456".equals(otp)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid OTP.");
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + id));
+
+        // Use real OTP store now
+        if (!otpStore.validateAndConsume(student.getEmail(), otp)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired OTP.");
         }
 
         log.info("Attempting password reset (via OTP) for student ID: {}", id);
-
-        Student student = studentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + id));
 
         student.setPasswordHash(simpleHash(newPassword));
         studentRepository.save(student);
@@ -378,6 +513,7 @@ public class StudentController {
         }
         return new StringBuilder(password).reverse().toString() + ".TnP";
     }
+
 
     private StudentResponse convertToResponse(Student student) {
         StudentResponse response = new StudentResponse();

@@ -364,6 +364,6 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 ---
 
 <div align="center">
-  <strong>Built for TCET Mumbai's Training & Placement Cell</strong><br/>
+  <strong>Built for College Mumbai's Training & Placement Cell</strong><br/>
   <a href="ARCHITECTURE.md">System Architecture & Diagrams →</a>
 </div>

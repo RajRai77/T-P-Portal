@@ -16,6 +16,19 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
+  // ── Forgot Password modal state ────────────────────────────────────────────
+  showForgotModal = false;
+  forgotStep: 'email' | 'otp' | 'done' = 'email';
+  forgotEmail = '';
+  forgotOtp = '';
+  forgotNewPassword = '';
+  forgotConfirmPassword = '';
+  forgotLoading = false;
+  forgotError = '';
+  forgotSuccess = '';
+  resendCooldown = 0;
+  private cooldownInterval: any;
+
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
@@ -24,13 +37,11 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // 1. Initialize the Form
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      email:    ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
 
-    // 2. Check URL for helpful redirects (e.g., ?role=admin&registered=true)
     this.route.queryParams.subscribe(params => {
       if (params['role']) {
         this.activeTab = params['role'] === 'admin' ? 'admin' : 'student';
@@ -55,26 +66,119 @@ export class LoginComponent implements OnInit {
     if (this.loginForm.valid) {
       this.isLoading = true;
 
-      // Dynamically choose the correct API call based on the active tab
-      const loginRequest = this.activeTab === 'student' 
+      const loginRequest = this.activeTab === 'student'
         ? this.authService.loginStudent(this.loginForm.value)
         : this.authService.loginAdmin(this.loginForm.value);
 
       loginRequest.subscribe({
-        next: (res) => {
+        next: () => {
           this.isLoading = false;
-          // Redirect to their respective dashboards (We will build these next!)
           const targetRoute = this.activeTab === 'student' ? '/dashboard/student' : '/dashboard/admin';
           this.router.navigate([targetRoute]);
         },
         error: (err) => {
           this.isLoading = false;
-          // This will catch the 403 Forbidden if the Admin is still PENDING!
           this.errorMessage = err.error?.message || 'Invalid credentials or account access denied.';
         }
       });
     } else {
       this.loginForm.markAllAsTouched();
     }
+  }
+
+  // ── FORGOT PASSWORD MODAL ───────────────────────────────────────────────────
+
+  openForgotModal() {
+    this.showForgotModal = true;
+    this.forgotStep = 'email';
+    this.forgotEmail = '';
+    this.forgotOtp = '';
+    this.forgotNewPassword = '';
+    this.forgotConfirmPassword = '';
+    this.forgotError = '';
+    this.forgotSuccess = '';
+    this.forgotLoading = false;
+    clearInterval(this.cooldownInterval);
+    this.resendCooldown = 0;
+  }
+
+  closeForgotModal() {
+    this.showForgotModal = false;
+  }
+
+  forgotSendOtp() {
+    if (!this.forgotEmail) {
+      this.forgotError = 'Please enter your registered email.';
+      return;
+    }
+    this.forgotError = '';
+    this.forgotLoading = true;
+
+    const req = this.activeTab === 'student'
+      ? this.authService.studentForgotPasswordSendOtp(this.forgotEmail)
+      : this.authService.adminForgotPasswordSendOtp(this.forgotEmail);
+
+    req.subscribe({
+      next: () => {
+        this.forgotLoading = false;
+        this.forgotStep = 'otp';
+        this.forgotSuccess = `OTP sent to ${this.forgotEmail}. Check your inbox (valid 10 min).`;
+        this.startResendCooldown();
+      },
+      error: (err) => {
+        this.forgotLoading = false;
+        this.forgotError = err.error?.message || 'No account found with this email.';
+      }
+    });
+  }
+
+  forgotResetPassword() {
+    this.forgotError = '';
+    if (!this.forgotOtp || this.forgotOtp.length !== 6) {
+      this.forgotError = 'Please enter the 6-digit OTP.';
+      return;
+    }
+    if (!this.forgotNewPassword || this.forgotNewPassword.length < 6) {
+      this.forgotError = 'Password must be at least 6 characters.';
+      return;
+    }
+    if (this.forgotNewPassword !== this.forgotConfirmPassword) {
+      this.forgotError = 'Passwords do not match.';
+      return;
+    }
+
+    this.forgotLoading = true;
+
+    const req = this.activeTab === 'student'
+      ? this.authService.studentForgotPasswordReset(this.forgotEmail, this.forgotOtp, this.forgotNewPassword)
+      : this.authService.adminForgotPasswordReset(this.forgotEmail, this.forgotOtp, this.forgotNewPassword);
+
+    req.subscribe({
+      next: () => {
+        this.forgotLoading = false;
+        this.forgotStep = 'done';
+        this.forgotSuccess = '✅ Password reset successfully! You can now sign in with your new password.';
+        clearInterval(this.cooldownInterval);
+      },
+      error: (err) => {
+        this.forgotLoading = false;
+        this.forgotError = err.error?.message || 'Invalid or expired OTP. Please try again.';
+      }
+    });
+  }
+
+  forgotResendOtp() {
+    if (this.resendCooldown > 0) return;
+    this.forgotSuccess = '';
+    this.forgotSendOtp();
+  }
+
+  private startResendCooldown(seconds = 60) {
+    this.resendCooldown = seconds;
+    clearInterval(this.cooldownInterval);
+    this.cooldownInterval = setInterval(() => {
+      this.resendCooldown--;
+      if (this.resendCooldown <= 0) clearInterval(this.cooldownInterval);
+    }, 1000);
   }
 }

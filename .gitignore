@@ -19,3 +19,10 @@ target/
 
 # MacOS
 .DS_Store
+
+# Uploads directory (files go to Cloudinary in production)
+backend/uploads/
+
+# Large data files
+myclg-group.txt
+seed_data.sql

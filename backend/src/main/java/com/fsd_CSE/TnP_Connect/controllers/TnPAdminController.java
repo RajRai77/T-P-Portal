@@ -29,6 +29,9 @@ public class TnPAdminController {
     private com.fsd_CSE.TnP_Connect.util.EmailService emailService;
 
     @Autowired
+    private com.fsd_CSE.TnP_Connect.util.OtpStore otpStore;
+
+    @Autowired
     private com.fsd_CSE.TnP_Connect.util.JwtUtil jwtUtil;
     private static final Logger log = LoggerFactory.getLogger(TnPAdminController.class);
 
@@ -209,6 +212,70 @@ public class TnPAdminController {
         );
 
         return ResponseEntity.ok(response);
+    }
+
+    // ================================================================
+    // FORGOT PASSWORD — ADMIN
+    // ================================================================
+
+    /**
+     * Step 1: send OTP to registered admin email.
+     * Request body: { "email": "admin@college.in" }
+     */
+    @PostMapping("/forgot-password/send-otp")
+    public ResponseEntity<Map<String, String>> forgotPasswordSendOtp(
+            @RequestBody Map<String, String> body) {
+
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is required.");
+        }
+
+        TnPAdmin admin = tnpAdminRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "No admin account found with this email address."));
+
+        String otp = otpStore.generateAndStore(email);
+        emailService.sendAdminPasswordResetOtp(email, admin.getName(), otp);
+        log.info("Admin password reset OTP sent to {}", email);
+
+        return ResponseEntity.ok(Map.of("message", "OTP sent to " + email + ". Valid for 10 minutes."));
+    }
+
+    /**
+     * Step 2: verify OTP and set new admin password.
+     * Request body: { "email": "...", "otp": "123456", "newPassword": "..." }
+     */
+    @PostMapping("/forgot-password/reset")
+    public ResponseEntity<Map<String, String>> forgotPasswordReset(
+            @RequestBody Map<String, String> body) {
+
+        String email       = body.get("email");
+        String otp         = body.get("otp");
+        String newPassword = body.get("newPassword");
+
+        if (email == null || otp == null || newPassword == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "email, otp, and newPassword are required.");
+        }
+        if (newPassword.length() < 6) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Password must be at least 6 characters.");
+        }
+        if (!otpStore.validateAndConsume(email, otp)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED,
+                    "Invalid or expired OTP.");
+        }
+
+        TnPAdmin admin = tnpAdminRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Admin not found."));
+
+        admin.setPasswordHash(simpleHash(newPassword));
+        tnpAdminRepository.save(admin);
+
+        log.info("Password reset successfully for admin email: {}", email);
+        return ResponseEntity.ok(Map.of("message", "Password reset successfully. Please log in."));
     }
 
     private String simpleHash(String password) {
