@@ -172,12 +172,21 @@ export class AdminDashboardComponent implements OnInit {
   submitContest() {
     if (this.contestForm.valid) {
       this.isPostingContest = true;
-      const payload = { ...this.contestForm.value, createdByAdmin: { id: this.adminId } };
+      const v = this.contestForm.value;
+      const payload = {
+        title: v.title,
+        platform: v.platform,
+        contestUrl: v.contestUrl,
+        description: v.description,
+        startDatetime: v.startDatetime ? v.startDatetime + ':00+05:30' : null,
+        endDatetime: v.endDatetime ? v.endDatetime + ':00+05:30' : null,
+        createdByAdmin: { id: this.adminId }
+      };
       this.dashboardService.createContest(payload).subscribe({
         next: () => {
-          this.isPostingContest = false; this.toggleContestForm(); this.loadDashboardData(); alert("Contest Posted!");
+          this.isPostingContest = false; this.toggleContestForm(); this.loadDashboardData(); alert('Contest Posted!');
         },
-        error: () => { this.isPostingContest = false; alert("Failed to post contest."); }
+        error: () => { this.isPostingContest = false; alert('Failed to post contest.'); }
       });
     } else this.contestForm.markAllAsTouched();
   }
@@ -228,10 +237,20 @@ export class AdminDashboardComponent implements OnInit {
   submitSession() {
     if (this.sessionForm.valid) {
       this.isPostingSession = true;
-      const payload = { ...this.sessionForm.value, createdByAdminId: this.adminId };
+      const v = this.sessionForm.value;
+      const payload = {
+        title: v.title,
+        speaker: v.speaker,
+        description: v.description,
+        joinUrl: v.joinUrl,
+        sessionDatetime: v.sessionDatetime ? v.sessionDatetime + ':00+05:30' : null,
+        targetBranch: (v.targetBranch === 'ALL' || !v.targetBranch) ? null : v.targetBranch,
+        targetYear: (!v.targetYear || v.targetYear === 0) ? null : v.targetYear,
+        createdByAdminId: this.adminId
+      };
       this.dashboardService.createSession(payload).subscribe({
-        next: () => { this.isPostingSession = false; this.toggleSessionForm(); this.loadDashboardData(); alert("Session Scheduled Successfully!"); },
-        error: (err) => { this.isPostingSession = false; alert("Failed to schedule session."); console.error(err); }
+        next: () => { this.isPostingSession = false; this.toggleSessionForm(); this.loadDashboardData(); alert('Session Scheduled Successfully!'); },
+        error: (err) => { this.isPostingSession = false; alert('Failed to schedule session.'); console.error(err); }
       });
     } else { this.sessionForm.markAllAsTouched(); }
   }
