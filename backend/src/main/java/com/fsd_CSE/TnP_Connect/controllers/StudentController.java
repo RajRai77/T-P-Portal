@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -277,6 +278,7 @@ public class StudentController {
     }
 
     //  11. Get Full Student Details
+    @Transactional(readOnly = true)
     @GetMapping("/{id}/full-details")
     public ResponseEntity<StudentFullDetailsResponse> getStudentFullDetails(@PathVariable Integer id) {
         log.info("Fetching FULL details for student ID: {}", id);

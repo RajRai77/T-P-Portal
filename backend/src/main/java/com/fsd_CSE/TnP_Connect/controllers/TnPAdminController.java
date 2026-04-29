@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import com.fsd_CSE.TnP_Connect.Enitities.*;
 import com.fsd_CSE.TnP_Connect.ExceptionHandling.ResourceNotFoundException;
@@ -160,6 +161,7 @@ public class TnPAdminController {
 
 
     //Get full detaisl of Admin through id
+    @Transactional(readOnly = true)
     @GetMapping("/{id}/full-details")
     public ResponseEntity<TnPAdminFullDetailsResponse> getAdminFullDetails(@PathVariable Integer id) {
         log.info("Fetching FULL details for admin ID: {}", id);
