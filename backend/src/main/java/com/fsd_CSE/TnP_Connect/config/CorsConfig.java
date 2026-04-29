@@ -13,12 +13,12 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/api/**")
+                registry.addMapping("/**")
                         .allowedOriginPatterns(
                             "http://localhost:4200",
+                            "https://tnp-portal.netlify.app",
                             "https://*.netlify.app",
-                            "https://*.vercel.app",
-                            "https://tnp-connect.netlify.app"
+                            "https://*.vercel.app"
                         )
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
