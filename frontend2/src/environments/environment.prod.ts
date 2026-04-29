@@ -1,4 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://tnp-connect-api.onrender.com/api'
+  apiUrl: 'https://t-p-portal-1.onrender.com'
 };
+
