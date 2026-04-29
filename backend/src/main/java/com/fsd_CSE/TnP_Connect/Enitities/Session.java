@@ -1,6 +1,6 @@
 package com.fsd_CSE.TnP_Connect.Enitities;
 
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -43,7 +43,8 @@ public class Session {
     @JoinColumn(name = "created_by_admin_id", referencedColumnName = "admin_id")
     private TnPAdmin createdByAdmin;
 
-    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<SessionRegistration> registrations;
 
 

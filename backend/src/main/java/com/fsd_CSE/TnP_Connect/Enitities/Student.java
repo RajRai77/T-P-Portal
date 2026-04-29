@@ -1,5 +1,6 @@
 package com.fsd_CSE.TnP_Connect.Enitities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -69,11 +70,13 @@ public class Student {
 
     // Relationships
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<InternshipApplication> internshipApplications;
 
     @Schema(accessMode = Schema.AccessMode.READ_ONLY)
-    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<SessionRegistration> sessionRegistrations;
 
     public Integer getId() {

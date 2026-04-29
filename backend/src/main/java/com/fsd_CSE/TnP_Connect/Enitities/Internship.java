@@ -1,6 +1,6 @@
 package com.fsd_CSE.TnP_Connect.Enitities;
 
-
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -37,7 +37,8 @@ public class Internship {
     private TnPAdmin createdByAdmin;
 
 
-    @OneToMany(mappedBy = "internship", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    @OneToMany(mappedBy = "internship", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<InternshipApplication> applications;
 
 

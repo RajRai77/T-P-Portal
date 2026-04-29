@@ -15,11 +15,10 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOriginPatterns(
-                            "http://localhost:4200",
-                            "https://tnp-portal.netlify.app",
-                            "https://*.netlify.app",
-                            "https://*.vercel.app"
-                        )
+                                "http://localhost:4200",
+                                "https://tnp-portal.netlify.app",
+                                "https://*.netlify.app",
+                                "https://*.vercel.app")
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true)
