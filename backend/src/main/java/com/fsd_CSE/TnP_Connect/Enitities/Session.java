@@ -39,7 +39,7 @@ public class Session {
     private OffsetDateTime createdAt;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by_admin_id", referencedColumnName = "admin_id")
     private TnPAdmin createdByAdmin;
 

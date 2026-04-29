@@ -32,7 +32,7 @@ public class Internship {
     private OffsetDateTime createdAt;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by", referencedColumnName = "admin_id")
     private TnPAdmin createdByAdmin;
 

@@ -32,7 +32,7 @@ public class Notes {
     @Column(name = "uploaded_at", updatable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime uploadedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "uploaded_by_admin_id", referencedColumnName = "admin_id")
     private TnPAdmin uploadedByAdmin;
 

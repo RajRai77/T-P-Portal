@@ -31,7 +31,7 @@ public class Resource {
     private OffsetDateTime createdAt;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by", referencedColumnName = "admin_id")
     private TnPAdmin createdByAdmin;
 
