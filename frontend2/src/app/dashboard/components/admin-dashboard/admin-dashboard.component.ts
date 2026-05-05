@@ -37,8 +37,9 @@ export class AdminDashboardComponent implements OnInit {
   // Session View
   currentSessionName = ''; selectedSessionId: number | null = null; sessionRegistrations: any[] = [];
   viewingRegistrationsSessionId: number | null = null;
-  sessionBranchStats: {branch: string, count: number}[] = []; isFetchingSessionRegistrations = false;
+  sessionBranchStats: { branch: string, count: number }[] = []; isFetchingSessionRegistrations = false;
   isEditingSession = false;
+  editSessionId: number | null = null;
 
   // Forms correctly typed!
   internshipForm!: FormGroup; resourceForm!: FormGroup; noteForm!: FormGroup;
@@ -56,7 +57,7 @@ export class AdminDashboardComponent implements OnInit {
   editAdminName = ''; editAdminPhone = ''; editAdminLinkedin = ''; editAdminAboutMe = ''; editAdminProfilePicUrl = '';
   isSavingAdminProfile = false;
 
-  
+
   // --- CONFIRM MODAL ---
   showModal = false;
   modalTitle = '';
@@ -93,7 +94,7 @@ export class AdminDashboardComponent implements OnInit {
     this.closeModal();
   }
 
-  constructor(private toastService: ToastService, private dashboardService: AdminDashboardService, private router: Router, private fb: FormBuilder) {}
+  constructor(private toastService: ToastService, private dashboardService: AdminDashboardService, private router: Router, private fb: FormBuilder) { }
 
   ngOnInit(): void {
     const token = localStorage.getItem('token');
@@ -112,7 +113,7 @@ export class AdminDashboardComponent implements OnInit {
       });
 
       this.resourceForm = this.fb.group({
-        title: ['', Validators.required], type: ['Link', Validators.required], description: ['', Validators.required], fileUrl: [''] 
+        title: ['', Validators.required], type: ['Link', Validators.required], description: ['', Validators.required], fileUrl: ['']
       });
 
       this.noteForm = this.fb.group({
@@ -121,7 +122,7 @@ export class AdminDashboardComponent implements OnInit {
 
       this.sessionForm = this.fb.group({
         title: ['', Validators.required], speaker: ['', Validators.required], sessionDatetime: ['', Validators.required],
-        targetBranch: ['ALL', Validators.required], targetYear: [0, Validators.required], 
+        targetBranch: ['ALL', Validators.required], targetYear: [0, Validators.required],
         mode: ['ONLINE', Validators.required], joinUrl: [''], venue: [''], description: ['', Validators.required]
       });
 
@@ -168,7 +169,7 @@ export class AdminDashboardComponent implements OnInit {
 
         this.allResources = result.resources;
         this.allNotes = result.notes;
-        
+
         this.allSessions = result.sessions;
         const now = new Date().toISOString();
         this.upcomingSessions = this.allSessions.filter(s => s.sessionDatetime >= now || !s.sessionDatetime);
@@ -176,7 +177,7 @@ export class AdminDashboardComponent implements OnInit {
 
         this.allContests = result.contests;
         this.totalContests = result.contests.length;
-        
+
         this.allNotifications = result.notifications;
 
         this.allStudents = result.students;
@@ -279,21 +280,22 @@ export class AdminDashboardComponent implements OnInit {
   // ==========================================
   // SESSIONS LOGIC
   // ==========================================
-  toggleSessionForm() { 
-    this.showSessionForm = !this.showSessionForm; 
+  toggleSessionForm() {
+    this.showSessionForm = !this.showSessionForm;
     this.isEditingSession = false;
-    this.selectedSessionId = null;
+    this.editSessionId = null; // Naya variable clear karo
     this.viewingRegistrationsSessionId = null;
-    if (!this.showSessionForm) { 
-      this.sessionForm.reset({ targetBranch: 'ALL', targetYear: 0, mode: 'ONLINE' }); 
-    } 
+    if (!this.showSessionForm) {
+      this.sessionForm.reset({ targetBranch: 'ALL', targetYear: 0, mode: 'ONLINE' });
+    }
   }
 
   editSession(session: any) {
+    this.viewingRegistrationsSessionId = null; // Hide registrations
     this.showSessionForm = true;
     this.isEditingSession = true;
-    this.selectedSessionId = session.id;
-    const datetimeStr = session.sessionDatetime ? new Date(session.sessionDatetime).toISOString().slice(0,16) : '';
+    this.editSessionId = session.id;
+    const datetimeStr = session.sessionDatetime ? new Date(session.sessionDatetime).toISOString().slice(0, 16) : '';
     this.sessionForm.patchValue({
       title: session.title,
       speaker: session.speaker,
@@ -327,8 +329,8 @@ export class AdminDashboardComponent implements OnInit {
         createdByAdminId: this.adminId
       };
 
-      if (this.isEditingSession && this.selectedSessionId) {
-        this.dashboardService.updateSession(this.selectedSessionId, payload).subscribe({
+      if (this.isEditingSession && this.editSessionId) {
+        this.dashboardService.updateSession(this.editSessionId, payload).subscribe({
           next: () => { this.isPostingSession = false; this.toggleSessionForm(); this.loadDashboardData(); this.toastService.show('Session Updated Successfully!'); },
           error: (err) => { this.isPostingSession = false; this.toastService.show('Failed to update session.'); console.error(err); }
         });
@@ -342,25 +344,28 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   cancelSession(id: number) {
-    const reason = prompt("Enter reason for cancelling this session:");
-    if(reason) {
-      this.dashboardService.cancelSession(id, reason).subscribe({
-        next: () => { this.loadDashboardData(); this.toastService.show("Session Cancelled."); },
-        error: () => this.toastService.show("Failed to cancel session.")
-      });
-    }
+    this.openPromptModal("Cancel Session", "Enter reason for cancelling this session:", (reason) => {
+      if (reason) {
+        this.dashboardService.cancelSession(id, reason).subscribe({
+          next: () => { this.loadDashboardData(); this.toastService.show("Session Cancelled."); },
+          error: () => this.toastService.show("Failed to cancel session.")
+        });
+      }
+    });
   }
-
   deleteSession(id: number) {
-    if(confirm("Are you sure you want to permanently delete this past session?")) {
+    // Native confirm() ki jagah custom openConfirmModal use kiya
+    this.openConfirmModal("Delete Session", "Are you sure you want to permanently delete this past session?", () => {
       this.dashboardService.deleteSession(id).subscribe({
-        next: () => { this.loadDashboardData(); },
+        next: () => { this.loadDashboardData(); this.toastService.show("Session Deleted!"); },
         error: () => this.toastService.show("Failed to delete session.")
       });
-    }
+    });
   }
   viewSessionRegistrations(session: any) {
-    this.isFetchingSessionRegistrations = true; this.selectedSessionId = session.id; this.currentSessionName = session.title;
+
+    this.isFetchingSessionRegistrations = true; this.selectedSessionId = null; this.currentSessionName = session.title;
+    this.viewingRegistrationsSessionId = session.id;
     this.dashboardService.getSessionRegistrations(session.id).subscribe({
       next: (data) => { this.sessionRegistrations = data; this.calculateSessionBranchStats(); this.isFetchingSessionRegistrations = false; },
       error: (err) => { console.error(err); this.isFetchingSessionRegistrations = false; this.toastService.show("Could not load registrations."); }
@@ -371,7 +376,7 @@ export class AdminDashboardComponent implements OnInit {
     this.sessionRegistrations.forEach(reg => { counts[reg.studentBranch || 'Unknown'] = (counts[reg.studentBranch || 'Unknown'] || 0) + 1; });
     this.sessionBranchStats = Object.keys(counts).map(b => ({ branch: b, count: counts[b] })).sort((a, b) => b.count - a.count);
   }
-  closeSessionRegistrations() { this.selectedSessionId = null; this.sessionRegistrations = []; }
+  closeSessionRegistrations() { this.viewingRegistrationsSessionId = null; this.selectedSessionId = null; this.sessionRegistrations = []; }
 
   // ==========================================
   // RESOURCES & NOTES LOGIC
@@ -380,7 +385,7 @@ export class AdminDashboardComponent implements OnInit {
   toggleNoteForm() { this.showNoteForm = !this.showNoteForm; this.showResourceForm = false; this.selectedNoteFile = null; if (!this.showNoteForm) this.noteForm.reset({ targetBranch: 'COMP', targetYear: 3 }); }
   onNoteFileSelected(event: any) { const file = event.target.files[0]; if (file) this.selectedNoteFile = file; }
   onResourceFileSelected(event: any) { const file = event.target.files[0]; if (file) this.selectedResourceFile = file; }
-  
+
   submitNote() {
     if (this.noteForm.valid) {
       if (!this.selectedNoteFile) { this.toastService.show("Please select a file to upload for this note."); return; }
@@ -416,14 +421,14 @@ export class AdminDashboardComponent implements OnInit {
       }
     } else { this.resourceForm.markAllAsTouched(); }
   }
-  
+
   finalizeResourceSubmit(payload: any) {
     this.dashboardService.createResource(payload).subscribe({
       next: () => { this.isPostingMaterial = false; this.toggleResourceForm(); this.loadDashboardData(); this.toastService.show("Resource added successfully!"); },
       error: () => { this.isPostingMaterial = false; this.toastService.show("Failed to add resource."); }
     });
   }
-  
+
   deleteResource(id: number) { this.openConfirmModal("Delete Resource", "Are you sure you want to delete this global resource?", () => { this.dashboardService.deleteResource(id).subscribe({ next: () => { this.allResources = this.allResources.filter(r => r.id !== id); }, error: () => this.toastService.show("Failed to delete resource.") }); }); }
   deleteNote(id: number) { this.openConfirmModal("Delete Note", "Are you sure you want to delete this study note?", () => { this.dashboardService.deleteNote(id).subscribe({ next: () => { this.allNotes = this.allNotes.filter(n => n.id !== id); }, error: () => this.toastService.show("Failed to delete note.") }); }); }
 
@@ -452,11 +457,11 @@ export class AdminDashboardComponent implements OnInit {
   viewStudentProfile(studentId: number) {
     this.isFetchingStudentProfile = true; this.selectedStudentId = studentId;
     this.dashboardService.getStudentFullDetails(studentId).subscribe({
-      next: (data) => { 
-        this.selectedStudent = data; 
-        try { this.selectedStudent.projectsList = this.selectedStudent.projects ? JSON.parse(this.selectedStudent.projects) : []; } catch(e) { this.selectedStudent.projectsList = []; }
-        try { this.selectedStudent.experiencesList = this.selectedStudent.experiences ? JSON.parse(this.selectedStudent.experiences) : []; } catch(e) { this.selectedStudent.experiencesList = []; }
-        this.isFetchingStudentProfile = false; 
+      next: (data) => {
+        this.selectedStudent = data;
+        try { this.selectedStudent.projectsList = this.selectedStudent.projects ? JSON.parse(this.selectedStudent.projects) : []; } catch (e) { this.selectedStudent.projectsList = []; }
+        try { this.selectedStudent.experiencesList = this.selectedStudent.experiences ? JSON.parse(this.selectedStudent.experiences) : []; } catch (e) { this.selectedStudent.experiencesList = []; }
+        this.isFetchingStudentProfile = false;
       },
       error: () => { this.isFetchingStudentProfile = false; this.toastService.show("Failed to load student profile."); this.closeStudentProfile(); }
     });
@@ -464,7 +469,7 @@ export class AdminDashboardComponent implements OnInit {
   closeStudentProfile() { this.selectedStudentId = null; this.selectedStudent = null; }
 
   deleteStudent(id: number) {
-    if(confirm("Are you sure you want to completely remove this student from the system?")) {
+    if (confirm("Are you sure you want to completely remove this student from the system?")) {
       this.dashboardService.deleteStudent(id).subscribe({
         next: () => { this.allStudents = this.allStudents.filter(s => s.id !== id); this.calculateStudentStats(); this.applyStudentFilters(this.searchQuery, this.filterBranch, this.filterYear); this.toastService.show("Student deleted successfully."); },
         error: () => this.toastService.show("Failed to delete student.")
@@ -486,7 +491,7 @@ export class AdminDashboardComponent implements OnInit {
   updateCandidateStatus(application: any, newStatus: string) {
     const targetAppId = application.applicationId || application.id;
     if (!targetAppId) { this.toastService.show("Error: Missing Application ID."); return; }
-    if(confirm(`Mark ${application.studentName} as ${newStatus}?`)) {
+    if (confirm(`Mark ${application.studentName} as ${newStatus}?`)) {
       this.dashboardService['http'].patch(`/api/applications/${targetAppId}/status`, { status: newStatus }).subscribe({
         next: () => { application.applicationStatus = newStatus; this.toastService.show(`Candidate successfully marked as ${newStatus}`); },
         error: (err) => { console.error(err); this.toastService.show("Failed to update status."); }
@@ -542,7 +547,7 @@ export class AdminDashboardComponent implements OnInit {
   // UTILS
   // ==========================================
   approveUser(id: number) {
-    if(confirm("Are you sure you want to approve this admin? They will receive an email immediately.")) {
+    if (confirm("Are you sure you want to approve this admin? They will receive an email immediately.")) {
       this.dashboardService.approveAdmin(id).subscribe({
         next: () => { this.pendingAdmins = this.pendingAdmins.filter(admin => admin.id !== id); this.pendingApprovalsCount = this.pendingAdmins.length; this.toastService.show("Admin Approved Successfully! Email sent."); },
         error: (err) => this.toastService.show("Failed to approve admin.")

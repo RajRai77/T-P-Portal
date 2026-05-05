@@ -39,7 +39,7 @@ public class Session {
     private OffsetDateTime createdAt;
 
     private String mode; // "ONLINE" or "OFFLINE"
-    
+
     private String venue; // For offline sessions
 
     private String status = "SCHEDULED"; // "SCHEDULED", "CANCELLED", etc.
@@ -51,39 +51,126 @@ public class Session {
     private TnPAdmin createdByAdmin;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<SessionRegistration> registrations;
 
+    public Integer getId() {
+        return id;
+    }
 
-    public Integer getId() { return id; }
-    public void setId(Integer id) { this.id = id; }
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public String getSpeaker() { return speaker; }
-    public void setSpeaker(String speaker) { this.speaker = speaker; }
-    public String getTargetBranch() { return targetBranch; }
-    public void setTargetBranch(String targetBranch) { this.targetBranch = targetBranch; }
-    public Integer getTargetYear() { return targetYear; }
-    public void setTargetYear(Integer targetYear) { this.targetYear = targetYear; }
-    public OffsetDateTime getSessionDatetime() { return sessionDatetime; }
-    public void setSessionDatetime(OffsetDateTime sessionDatetime) { this.sessionDatetime = sessionDatetime; }
-    public String getJoinUrl() { return joinUrl; }
-    public void setJoinUrl(String joinUrl) { this.joinUrl = joinUrl; }
-    public OffsetDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
-    public TnPAdmin getCreatedByAdmin() { return createdByAdmin; }
-    public void setCreatedByAdmin(TnPAdmin createdByAdmin) { this.createdByAdmin = createdByAdmin; }
-    public List<SessionRegistration> getRegistrations() { return registrations; }
-    public void setRegistrations(List<SessionRegistration> registrations) { this.registrations = registrations; }
+    public void setId(Integer id) {
+        this.id = id;
+    }
 
-    public String getMode() { return mode; }
-    public void setMode(String mode) { this.mode = mode; }
-    public String getVenue() { return venue; }
-    public void setVenue(String venue) { this.venue = venue; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    public String getCancellationReason() { return cancellationReason; }
-    public void setCancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; }
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getSpeaker() {
+        return speaker;
+    }
+
+    public void setSpeaker(String speaker) {
+        this.speaker = speaker;
+    }
+
+    public String getTargetBranch() {
+        return targetBranch;
+    }
+
+    public void setTargetBranch(String targetBranch) {
+        this.targetBranch = targetBranch;
+    }
+
+    public Integer getTargetYear() {
+        return targetYear;
+    }
+
+    public void setTargetYear(Integer targetYear) {
+        this.targetYear = targetYear;
+    }
+
+    public OffsetDateTime getSessionDatetime() {
+        return sessionDatetime;
+    }
+
+    public void setSessionDatetime(OffsetDateTime sessionDatetime) {
+        this.sessionDatetime = sessionDatetime;
+    }
+
+    public String getJoinUrl() {
+        return joinUrl;
+    }
+
+    public void setJoinUrl(String joinUrl) {
+        this.joinUrl = joinUrl;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public TnPAdmin getCreatedByAdmin() {
+        return createdByAdmin;
+    }
+
+    public void setCreatedByAdmin(TnPAdmin createdByAdmin) {
+        this.createdByAdmin = createdByAdmin;
+    }
+
+    public List<SessionRegistration> getRegistrations() {
+        return registrations;
+    }
+
+    public void setRegistrations(List<SessionRegistration> registrations) {
+        this.registrations = registrations;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
+
+    public String getVenue() {
+        return venue;
+    }
+
+    public void setVenue(String venue) {
+        this.venue = venue;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getCancellationReason() {
+        return cancellationReason;
+    }
+
+    public void setCancellationReason(String cancellationReason) {
+        this.cancellationReason = cancellationReason;
+    }
 }

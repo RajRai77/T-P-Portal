@@ -451,20 +451,23 @@
       <!-- ============================== -->
       <div *ngIf="currentView === 'sessions'">
         <div class="section-header" style="margin-bottom: 2rem;">
-          <div *ngIf="!selectedSessionId">
+          <div *ngIf="!viewingRegistrationsSessionId">
             <h1>Sessions & Seminars</h1>
             <p>Schedule guest lectures, online webinars, and offline workshops.</p>
           </div>
-          <div *ngIf="selectedSessionId"><button class="btn-text" (click)="closeSessionRegistrations()">&larr; Back to
-              Sessions</button>
+
+          <div *ngIf="viewingRegistrationsSessionId">
+            <button class="btn-text" (click)="closeSessionRegistrations()">&larr; Back to Sessions</button>
             <h1 style="margin-top: 0.5rem;">Registrations: {{ currentSessionName }}</h1>
           </div>
-          <button class="btn btn-primary" (click)="toggleSessionForm()" *ngIf="!selectedSessionId">{{ showSessionForm ?
-            'Cancel Scheduling' : '+ Schedule Session' }}</button>
+          <button class="btn btn-primary" (click)="toggleSessionForm()" *ngIf="!viewingRegistrationsSessionId">
+            {{ showSessionForm ? 'Cancel Scheduling' : '+ Schedule Session' }}
+          </button>
         </div>
 
         <div class="form-panel animate-fade-in" *ngIf="showSessionForm && !selectedSessionId">
-          <h3 style="margin-bottom: 1.5rem; color: var(--primary-navy);">{{ isEditingSession ? 'Edit Session' : 'Schedule New Session' }}</h3>
+          <h3 style="margin-bottom: 1.5rem; color: var(--primary-navy);">{{ isEditingSession ? 'Edit Session' :
+            'Schedule New Session' }}</h3>
           <form [formGroup]="sessionForm" (ngSubmit)="submitSession()">
             <div class="form-grid">
               <div class="form-group full-width"><label>Session Title</label><input type="text" formControlName="title">
@@ -489,10 +492,10 @@
                   <option value="ONLINE">Online</option>
                   <option value="OFFLINE">Offline</option>
                 </select></div>
-              <div class="form-group" *ngIf="sessionForm.get('mode')?.value === 'ONLINE'"><label>Platform / Meeting Link</label><input type="text"
-                  formControlName="joinUrl"></div>
-              <div class="form-group" *ngIf="sessionForm.get('mode')?.value === 'OFFLINE'"><label>Venue</label><input type="text"
-                  formControlName="venue"></div>
+              <div class="form-group" *ngIf="sessionForm.get('mode')?.value === 'ONLINE'"><label>Platform / Meeting
+                  Link</label><input type="text" formControlName="joinUrl"></div>
+              <div class="form-group" *ngIf="sessionForm.get('mode')?.value === 'OFFLINE'"><label>Venue</label><input
+                  type="text" formControlName="venue"></div>
               <div class="form-group full-width"><label>Instructions / Description</label><textarea
                   formControlName="description" rows="3"></textarea></div>
             </div>
@@ -522,7 +525,8 @@
                   <td><strong>{{ session.title }}</strong><br><span
                       style="font-size: 0.85rem; color: var(--text-muted);">By {{ session.speaker }}</span></td>
                   <td>{{ session.sessionDatetime | date:'medium' }}</td>
-                  <td><span class="badge badge-open">{{ session.targetBranch || 'ALL' }} [YR: {{ !session.targetYear || session.targetYear === 0 ? 'ALL' : session.targetYear }}]</span></td>
+                  <td><span class="badge badge-open">{{ session.targetBranch || 'ALL' }} [YR: {{ !session.targetYear ||
+                      session.targetYear === 0 ? 'ALL' : session.targetYear }}]</span></td>
                   <td style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                     {{ session.mode === 'ONLINE' ? session.joinUrl : session.venue }}
                     <span style="display:block; font-size:0.75rem; color:var(--text-muted)">{{ session.mode }}</span>
@@ -534,14 +538,17 @@
                   </td>
                   <td style="display: flex; gap: 0.5rem;">
                     <button class="btn-small btn-outline" (click)="viewSessionRegistrations(session)">View</button>
-                    <button class="btn-small btn-outline" (click)="editSession(session)" *ngIf="session.status !== 'CANCELLED'">Edit</button>
-                    <button class="btn-small btn-outline" style="color: #DC2626; border-color: #DC2626;" (click)="cancelSession(session.id)" *ngIf="session.status !== 'CANCELLED'">Cancel</button>
+                    <button class="btn-small btn-outline" (click)="editSession(session)"
+                      *ngIf="session.status !== 'CANCELLED'">Edit</button>
+                    <button class="btn-small btn-outline" style="color: #DC2626; border-color: #DC2626;"
+                      (click)="cancelSession(session.id)" *ngIf="session.status !== 'CANCELLED'">Cancel</button>
                   </td>
                 </tr>
               </tbody>
             </table>
             <ng-template #noUpcoming>
-              <div style="padding: 2rem; text-align: center; color: var(--text-muted);">No upcoming sessions scheduled.</div>
+              <div style="padding: 2rem; text-align: center; color: var(--text-muted);">No upcoming sessions scheduled.
+              </div>
             </ng-template>
           </div>
 
@@ -574,19 +581,22 @@
                   </td>
                   <td style="display: flex; gap: 0.5rem;">
                     <button class="btn-small btn-outline" (click)="viewSessionRegistrations(session)">View</button>
-                    <button class="btn-small btn-outline" style="color: #DC2626; border-color: #DC2626;" (click)="deleteSession(session.id)">Delete</button>
+                    <button class="btn-small btn-outline" style="color: #DC2626; border-color: #DC2626;"
+                      (click)="deleteSession(session.id)">Delete</button>
                   </td>
                 </tr>
               </tbody>
             </table>
             <ng-template #noPast>
-              <div style="padding: 2rem; text-align: center; color: var(--text-muted);">No session history available.</div>
+              <div style="padding: 2rem; text-align: center; color: var(--text-muted);">No session history available.
+              </div>
             </ng-template>
           </div>
         </div>
 
         <div *ngIf="viewingRegistrationsSessionId" class="animate-fade-in">
-          <div style="margin-bottom: 1rem;"><button class="btn-small btn-outline" (click)="viewingRegistrationsSessionId = null">← Back to Sessions</button></div>
+          <div style="margin-bottom: 1rem;"><button class="btn-small btn-outline"
+              (click)="viewingRegistrationsSessionId = null">← Back to Sessions</button></div>
           <div *ngIf="!isFetchingSessionRegistrations">
             <div class="table-container">
               <table class="clean-table" *ngIf="sessionRegistrations.length > 0; else noSessionRegs">
