@@ -996,19 +996,19 @@
 
     </div>
   </main>
+</div>
 
-  <!-- ADMIN MODAL -->
-  <div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <h3>{{modalTitle}}</h3>
-      <p>{{modalMessage}}</p>
-      <div *ngIf="isPromptMode" style="margin-top: 1rem;">
-        <input type="text" [(ngModel)]="promptInputValue" class="ai-input w-full" placeholder="Type here...">
-      </div>
-      <div class="modal-actions" style="margin-top: 1.5rem;">
-        <button class="btn-outline" (click)="closeModal()">Cancel</button>
-        <button class="btn-primary" (click)="confirmModalAction()">Confirm</button>
-      </div>
+<!-- ADMIN MODAL -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h3>{{modalTitle}}</h3>
+    <p>{{modalMessage}}</p>
+    <div *ngIf="isPromptMode" style="margin-top: 1rem;">
+      <input type="text" [(ngModel)]="promptInputValue" class="ai-input w-full" placeholder="Type here...">
+    </div>
+    <div class="modal-actions" style="margin-top: 1.5rem;">
+      <button class="btn-outline" (click)="closeModal()">Cancel</button>
+      <button class="btn-primary" (click)="confirmModalAction()">Confirm</button>
     </div>
   </div>
 </div>
