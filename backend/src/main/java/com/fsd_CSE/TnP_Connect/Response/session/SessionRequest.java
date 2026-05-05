@@ -13,6 +13,8 @@ public class SessionRequest {
         private OffsetDateTime sessionDatetime;
         private String joinUrl;
         private Integer createdByAdminId;
+        private String mode;
+        private String venue;
 
         public String getTitle() { return title; }
         public void setTitle(String title) { this.title = title; }
@@ -30,6 +32,9 @@ public class SessionRequest {
         public void setJoinUrl(String joinUrl) { this.joinUrl = joinUrl; }
         public Integer getCreatedByAdminId() { return createdByAdminId; }
         public void setCreatedByAdminId(Integer createdByAdminId) { this.createdByAdminId = createdByAdminId; }
-
+        public String getMode() { return mode; }
+        public void setMode(String mode) { this.mode = mode; }
+        public String getVenue() { return venue; }
+        public void setVenue(String venue) { this.venue = venue; }
 
 }

@@ -660,22 +660,32 @@
       </div>
 
       <ng-template #sessionCard let-session="session">
-        <div class="job-card" (click)="openCard('session',session)">
+        <div class="job-card" (click)="openCard('session',session)" [class.cancelled]="session.status === 'CANCELLED'">
+          <div *ngIf="session.status === 'CANCELLED'" class="stamp stamp-missed" style="position:static; margin-bottom: 0.5rem; width: max-content;">CANCELLED</div>
           <div *ngIf="isSessionRegistered(session)" class="stamp stamp-applied">JOINED</div>
-          <div *ngIf="isJobMissed(session)" class="stamp stamp-missed">CLOSED</div>
+          <div *ngIf="isJobMissed(session) && session.status !== 'CANCELLED'" class="stamp stamp-missed">CLOSED</div>
           <h3 style="margin:0 0 0.5rem;font-size:1.1rem;color:var(--text-main)">{{session.title}}</h3>
           <p style="margin:0 0 0.75rem;font-weight:600;color:var(--primary-color);font-size:0.85rem">Speaker:
             {{session.speaker}}</p>
           <p style="margin:0 0 1rem;font-size:0.85rem;color:var(--text-muted)">{{session.sessionDatetime |
             date:'medium'}}</p>
-          <div *ngIf="getRemainingTime(session.sessionDatetime)" style="margin-bottom:1rem">
+          
+          <div style="margin-bottom:1rem; font-size: 0.85rem; color: var(--text-main);">
+            <strong>{{ session.mode || 'ONLINE' }}:</strong> {{ session.mode === 'ONLINE' ? session.joinUrl : session.venue }}
+          </div>
+
+          <div *ngIf="session.status === 'CANCELLED'" style="margin-bottom:1rem; padding: 0.5rem; background: rgba(220, 38, 38, 0.1); border-left: 3px solid #DC2626; color: #DC2626; font-size: 0.85rem;">
+            <strong>Reason:</strong> {{ session.cancellationReason }}
+          </div>
+
+          <div *ngIf="getRemainingTime(session.sessionDatetime) && session.status !== 'CANCELLED'" style="margin-bottom:1rem">
             <span class="badge badge-closed" style="font-size:0.75rem"><svg class="inline-icon" viewBox="0 0 24 24">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
               {{getRemainingTime(session.sessionDatetime)}}</span>
           </div>
-          <button class="btn-small w-full" [class.btn-disabled]="isSessionRegistered(session)||isJobMissed(session)"
+          <button *ngIf="session.status !== 'CANCELLED'" class="btn-small w-full" [class.btn-disabled]="isSessionRegistered(session)||isJobMissed(session)"
             [disabled]="isRegistering||isSessionRegistered(session)||isJobMissed(session)"
             (click)="registerForSession(session);$event.stopPropagation()">
             {{isRegistering?'Registering...':(isSessionRegistered(session)?'Registered':(isJobMissed(session)?'Closed':'Register'))}}
@@ -750,7 +760,7 @@
               <td style="max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
                 {{note.description}}</td>
               <td>{{note.uploadedAt | date:'mediumDate'}}</td>
-              <td><a [href]="note.fileUrl" target="_blank" class="btn-small btn-outline"
+              <td><a [href]="ensureAbsoluteUrl(note.fileUrl)" target="_blank" class="btn-small btn-outline"
                   style="text-decoration:none;display:inline-block">Access File</a></td>
             </tr>
           </tbody>
@@ -779,7 +789,7 @@
               <td><span class="badge badge-open">{{res.type}}</span></td>
               <td style="max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
                 {{res.description}}</td>
-              <td><a [href]="res.fileUrl" target="_blank" class="btn-small btn-outline"
+              <td><a [href]="ensureAbsoluteUrl(res.fileUrl)" target="_blank" class="btn-small btn-outline"
                   style="text-decoration:none;display:inline-block">Open Link</a></td>
             </tr>
           </tbody>
@@ -1178,7 +1188,7 @@
                 {{isRegistering?'Registering...':(isSessionRegistered(selectedCard)?'Already
                 Registered':(isJobMissed(selectedCard)?'Closed':'Register'))}}
               </button>
-              <a *ngIf="selectedType==='note'||selectedType==='resource'" [href]="selectedCard?.fileUrl" target="_blank"
+              <a *ngIf="selectedType==='note'||selectedType==='resource'" [href]="ensureAbsoluteUrl(selectedCard?.fileUrl)" target="_blank"
                 class="btn-primary" style="text-decoration:none">Access File</a>
             </div>
           </div>

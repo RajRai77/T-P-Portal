@@ -34,6 +34,8 @@ export class AdminDashboardService {
   // --- SESSIONS ---
   getAllSessions(): Observable<any[]> { return this.http.get<any[]>(`${this.apiUrl}/sessions/`); }
   createSession(payload: any): Observable<any> { return this.http.post(`${this.apiUrl}/sessions/`, payload); }
+  updateSession(id: number, payload: any): Observable<any> { return this.http.put(`${this.apiUrl}/sessions/${id}`, payload); }
+  cancelSession(id: number, reason: string): Observable<any> { return this.http.patch(`${this.apiUrl}/sessions/${id}/cancel`, { reason }); }
   deleteSession(id: number): Observable<any> { return this.http.delete(`${this.apiUrl}/sessions/${id}`); }
   getSessionRegistrations(sessionId: number): Observable<any[]> { return this.http.get<any[]>(`${this.apiUrl}/sessions/${sessionId}/registrations`); }
 

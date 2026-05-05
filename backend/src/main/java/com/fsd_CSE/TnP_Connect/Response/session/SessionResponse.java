@@ -14,6 +14,10 @@ public class SessionResponse {
     private String createdByAdminName;
     private Integer createdByAdminId;
     private int registrationCount;
+    private String mode;
+    private String venue;
+    private String status;
+    private String cancellationReason;
 
 
     public Integer getId() { return id; }
@@ -38,5 +42,13 @@ public class SessionResponse {
     public void setRegistrationCount(int registrationCount) { this.registrationCount = registrationCount; }
     public Integer getCreatedByAdminId() { return createdByAdminId; }
     public void setCreatedByAdminId(Integer createdByAdminId) { this.createdByAdminId = createdByAdminId; }
+    public String getMode() { return mode; }
+    public void setMode(String mode) { this.mode = mode; }
+    public String getVenue() { return venue; }
+    public void setVenue(String venue) { this.venue = venue; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public String getCancellationReason() { return cancellationReason; }
+    public void setCancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; }
 
 }

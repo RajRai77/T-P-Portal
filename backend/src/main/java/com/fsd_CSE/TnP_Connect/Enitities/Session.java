@@ -38,7 +38,14 @@ public class Session {
     @Column(name = "created_at", updatable = false, columnDefinition = "TIMESTAMP WITH TIME ZONE")
     private OffsetDateTime createdAt;
 
+    private String mode; // "ONLINE" or "OFFLINE"
+    
+    private String venue; // For offline sessions
 
+    private String status = "SCHEDULED"; // "SCHEDULED", "CANCELLED", etc.
+
+    @Column(name = "cancellation_reason", columnDefinition = "TEXT")
+    private String cancellationReason;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by_admin_id", referencedColumnName = "admin_id")
     private TnPAdmin createdByAdmin;
@@ -70,4 +77,13 @@ public class Session {
     public void setCreatedByAdmin(TnPAdmin createdByAdmin) { this.createdByAdmin = createdByAdmin; }
     public List<SessionRegistration> getRegistrations() { return registrations; }
     public void setRegistrations(List<SessionRegistration> registrations) { this.registrations = registrations; }
+
+    public String getMode() { return mode; }
+    public void setMode(String mode) { this.mode = mode; }
+    public String getVenue() { return venue; }
+    public void setVenue(String venue) { this.venue = venue; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public String getCancellationReason() { return cancellationReason; }
+    public void setCancellationReason(String cancellationReason) { this.cancellationReason = cancellationReason; }
 }

@@ -464,7 +464,7 @@
         </div>
 
         <div class="form-panel animate-fade-in" *ngIf="showSessionForm && !selectedSessionId">
-          <h3 style="margin-bottom: 1.5rem; color: var(--primary-navy);">Schedule New Session</h3>
+          <h3 style="margin-bottom: 1.5rem; color: var(--primary-navy);">{{ isEditingSession ? 'Edit Session' : 'Schedule New Session' }}</h3>
           <form [formGroup]="sessionForm" (ngSubmit)="submitSession()">
             <div class="form-grid">
               <div class="form-group full-width"><label>Session Title</label><input type="text" formControlName="title">
@@ -477,6 +477,7 @@
                   <option value="ALL">All Branches</option>
                   <option value="COMP">COMP</option>
                   <option value="IT">IT</option>
+                  <option value="CS&E">CS&E</option>
                 </select></div>
               <div class="form-group"><label>Target Year</label><select formControlName="targetYear">
                   <option [ngValue]="0">All Years</option>
@@ -484,47 +485,104 @@
                   <option [ngValue]="2">2nd Year</option>
                   <option [ngValue]="3">3rd Year</option>
                 </select></div>
-              <div class="form-group full-width"><label>Venue or Online Link</label><input type="text"
+              <div class="form-group"><label>Session Mode</label><select formControlName="mode">
+                  <option value="ONLINE">Online</option>
+                  <option value="OFFLINE">Offline</option>
+                </select></div>
+              <div class="form-group" *ngIf="sessionForm.get('mode')?.value === 'ONLINE'"><label>Platform / Meeting Link</label><input type="text"
                   formControlName="joinUrl"></div>
+              <div class="form-group" *ngIf="sessionForm.get('mode')?.value === 'OFFLINE'"><label>Venue</label><input type="text"
+                  formControlName="venue"></div>
               <div class="form-group full-width"><label>Instructions / Description</label><textarea
                   formControlName="description" rows="3"></textarea></div>
             </div>
             <button type="submit" class="btn btn-primary" [disabled]="isPostingSession" style="margin-top: 1rem;">{{
-              isPostingSession ? 'Scheduling...' : 'Confirm & Schedule' }}</button>
+              isPostingSession ? 'Saving...' : (isEditingSession ? 'Update Session' : 'Confirm & Schedule') }}</button>
           </form>
         </div>
 
-        <div class="table-container" *ngIf="!showSessionForm && !selectedSessionId">
-          <table class="clean-table" *ngIf="allSessions.length > 0; else noSessions">
-            <thead>
-              <tr>
-                <th>Session Info</th>
-                <th>Date & Time</th>
-                <th>Target Audience</th>
-                <th>Venue / Link</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let session of allSessions">
-                <td><strong>{{ session.title }}</strong><br><span
-                    style="font-size: 0.85rem; color: var(--text-muted);">By {{ session.speaker }}</span></td>
-                <td>{{ session.sessionDatetime | date:'medium' }}</td>
-                <td><span class="badge badge-open">{{ session.targetBranch }} (Yr: {{ session.targetYear === 0 ? 'All' :
-                    session.targetYear }})</span></td>
-                <td style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{
-                  session.joinUrl }}</td>
-                <td><button class="btn-small btn-outline" style="margin-right: 0.5rem;"
-                    (click)="viewSessionRegistrations(session)">View Registrations</button><button
-                    class="btn-small btn-outline" style="color: #DC2626; border-color: #DC2626;"
-                    (click)="deleteSession(session.id)">Cancel</button></td>
-              </tr>
-            </tbody>
-          </table>
-          <ng-template #noSessions>
-            <div style="padding: 3rem; text-align: center; color: var(--text-muted);">No sessions are currently
-              scheduled.</div>
-          </ng-template>
+        <div *ngIf="!showSessionForm && !selectedSessionId">
+          <div class="section-header" style="margin-bottom: 1rem;">
+            <h2>Upcoming Sessions</h2>
+          </div>
+          <div class="table-container" style="margin-bottom: 3rem;">
+            <table class="clean-table" *ngIf="upcomingSessions.length > 0; else noUpcoming">
+              <thead>
+                <tr>
+                  <th>Session Info</th>
+                  <th>Date & Time</th>
+                  <th>Target Audience</th>
+                  <th>Venue / Link</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let session of upcomingSessions">
+                  <td><strong>{{ session.title }}</strong><br><span
+                      style="font-size: 0.85rem; color: var(--text-muted);">By {{ session.speaker }}</span></td>
+                  <td>{{ session.sessionDatetime | date:'medium' }}</td>
+                  <td><span class="badge badge-open">{{ session.targetBranch || 'ALL' }} [YR: {{ !session.targetYear || session.targetYear === 0 ? 'ALL' : session.targetYear }}]</span></td>
+                  <td style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ session.mode === 'ONLINE' ? session.joinUrl : session.venue }}
+                    <span style="display:block; font-size:0.75rem; color:var(--text-muted)">{{ session.mode }}</span>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="session.status === 'CANCELLED' ? 'badge-closed' : 'badge-success'">
+                      {{ session.status || 'SCHEDULED' }}
+                    </span>
+                  </td>
+                  <td style="display: flex; gap: 0.5rem;">
+                    <button class="btn-small btn-outline" (click)="viewSessionRegistrations(session)">View</button>
+                    <button class="btn-small btn-outline" (click)="editSession(session)" *ngIf="session.status !== 'CANCELLED'">Edit</button>
+                    <button class="btn-small btn-outline" style="color: #DC2626; border-color: #DC2626;" (click)="cancelSession(session.id)" *ngIf="session.status !== 'CANCELLED'">Cancel</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <ng-template #noUpcoming>
+              <div style="padding: 2rem; text-align: center; color: var(--text-muted);">No upcoming sessions scheduled.</div>
+            </ng-template>
+          </div>
+
+          <div class="section-header" style="margin-bottom: 1rem;">
+            <h2>Session History</h2>
+          </div>
+          <div class="table-container">
+            <table class="clean-table" *ngIf="pastSessions.length > 0; else noPast">
+              <thead>
+                <tr>
+                  <th>Session Info</th>
+                  <th>Date & Time</th>
+                  <th>Venue / Link</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let session of pastSessions">
+                  <td><strong>{{ session.title }}</strong><br><span
+                      style="font-size: 0.85rem; color: var(--text-muted);">By {{ session.speaker }}</span></td>
+                  <td>{{ session.sessionDatetime | date:'medium' }}</td>
+                  <td style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ session.mode === 'ONLINE' ? session.joinUrl : session.venue }}
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="session.status === 'CANCELLED' ? 'badge-closed' : 'badge-open'">
+                      {{ session.status === 'CANCELLED' ? 'CANCELLED' : 'COMPLETED' }}
+                    </span>
+                  </td>
+                  <td style="display: flex; gap: 0.5rem;">
+                    <button class="btn-small btn-outline" (click)="viewSessionRegistrations(session)">View</button>
+                    <button class="btn-small btn-outline" style="color: #DC2626; border-color: #DC2626;" (click)="deleteSession(session.id)">Delete</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <ng-template #noPast>
+              <div style="padding: 2rem; text-align: center; color: var(--text-muted);">No session history available.</div>
+            </ng-template>
+          </div>
         </div>
 
         <div *ngIf="selectedSessionId" class="animate-fade-in">

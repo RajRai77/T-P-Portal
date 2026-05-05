@@ -1,3 +1,4 @@
+import { ToastService } from '../../../shared/services/toast.service';
 import { Component, OnInit } from '@angular/core';
 import { AdminDashboardService } from '../../services/admin-dashboard.service';
 import { forkJoin } from 'rxjs';
@@ -22,7 +23,8 @@ export class AdminDashboardComponent implements OnInit {
   // Metrics & Data Collections
   totalStudents = 0; activeInternshipsCount = 0; pendingApprovalsCount = 0; totalSessions = 0; totalContests = 0;
   pendingAdmins: any[] = []; allInternships: any[] = []; allResources: any[] = []; allNotes: any[] = [];
-  allSessions: any[] = []; allContests: any[] = []; allNotifications: any[] = [];
+  allSessions: any[] = []; upcomingSessions: any[] = []; pastSessions: any[] = [];
+  allContests: any[] = []; allNotifications: any[] = [];
 
   // Student Management
   allStudents: any[] = []; filteredStudents: any[] = []; selectedStudentId: number | null = null;
@@ -35,6 +37,7 @@ export class AdminDashboardComponent implements OnInit {
   // Session View
   currentSessionName = ''; selectedSessionId: number | null = null; sessionRegistrations: any[] = [];
   sessionBranchStats: {branch: string, count: number}[] = []; isFetchingSessionRegistrations = false;
+  isEditingSession = false;
 
   // Forms correctly typed!
   internshipForm!: FormGroup; resourceForm!: FormGroup; noteForm!: FormGroup;
@@ -52,7 +55,7 @@ export class AdminDashboardComponent implements OnInit {
   editAdminName = ''; editAdminPhone = ''; editAdminLinkedin = ''; editAdminAboutMe = ''; editAdminProfilePicUrl = '';
   isSavingAdminProfile = false;
 
-  constructor(private dashboardService: AdminDashboardService, private router: Router, private fb: FormBuilder) {}
+  constructor(private toastService: ToastService, private dashboardService: AdminDashboardService, private router: Router, private fb: FormBuilder) {}
 
   ngOnInit(): void {
     const token = localStorage.getItem('token');
@@ -80,7 +83,8 @@ export class AdminDashboardComponent implements OnInit {
 
       this.sessionForm = this.fb.group({
         title: ['', Validators.required], speaker: ['', Validators.required], sessionDatetime: ['', Validators.required],
-        targetBranch: ['ALL', Validators.required], targetYear: [0, Validators.required], joinUrl: ['', Validators.required], description: ['', Validators.required]
+        targetBranch: ['ALL', Validators.required], targetYear: [0, Validators.required], 
+        mode: ['ONLINE', Validators.required], joinUrl: [''], venue: [''], description: ['', Validators.required]
       });
 
       this.contestForm = this.fb.group({
@@ -126,7 +130,11 @@ export class AdminDashboardComponent implements OnInit {
 
         this.allResources = result.resources;
         this.allNotes = result.notes;
+        
         this.allSessions = result.sessions;
+        const now = new Date().toISOString();
+        this.upcomingSessions = this.allSessions.filter(s => s.sessionDatetime >= now || !s.sessionDatetime);
+        this.pastSessions = this.allSessions.filter(s => s.sessionDatetime < now);
 
         this.allContests = result.contests;
         this.totalContests = result.contests.length;
@@ -184,9 +192,9 @@ export class AdminDashboardComponent implements OnInit {
       };
       this.dashboardService.createContest(payload).subscribe({
         next: () => {
-          this.isPostingContest = false; this.toggleContestForm(); this.loadDashboardData(); alert('Contest Posted!');
+          this.isPostingContest = false; this.toggleContestForm(); this.loadDashboardData(); this.toastService.show('Contest Posted!');
         },
-        error: () => { this.isPostingContest = false; alert('Failed to post contest.'); }
+        error: () => { this.isPostingContest = false; this.toastService.show('Failed to post contest.'); }
       });
     } else this.contestForm.markAllAsTouched();
   }
@@ -195,7 +203,7 @@ export class AdminDashboardComponent implements OnInit {
     if(confirm("Delete this contest?")) {
       this.dashboardService.deleteContest(id).subscribe({
         next: () => { this.allContests = this.allContests.filter(c => c.id !== id); this.totalContests = this.allContests.length; },
-        error: () => alert("Failed to delete.")
+        error: () => this.toastService.show("Failed to delete.")
       });
     }
   }
@@ -214,9 +222,9 @@ export class AdminDashboardComponent implements OnInit {
       const payload = { ...this.notificationForm.value, postedByAdmin: { id: this.adminId } };
       this.dashboardService.createNotification(payload).subscribe({
         next: () => {
-          this.isPostingNotification = false; this.toggleNotificationForm(); this.loadDashboardData(); alert("Notification Sent!");
+          this.isPostingNotification = false; this.toggleNotificationForm(); this.loadDashboardData(); this.toastService.show("Notification Sent!");
         },
-        error: () => { this.isPostingNotification = false; alert("Failed to send notification."); }
+        error: () => { this.isPostingNotification = false; this.toastService.show("Failed to send notification."); }
       });
     } else this.notificationForm.markAllAsTouched();
   }
@@ -225,7 +233,7 @@ export class AdminDashboardComponent implements OnInit {
     if(confirm("Delete this announcement?")) {
       this.dashboardService.deleteNotification(id).subscribe({
         next: () => { this.allNotifications = this.allNotifications.filter(n => n.id !== id); },
-        error: () => alert("Failed to delete.")
+        error: () => this.toastService.show("Failed to delete.")
       });
     }
   }
@@ -233,32 +241,82 @@ export class AdminDashboardComponent implements OnInit {
   // ==========================================
   // SESSIONS LOGIC
   // ==========================================
-  toggleSessionForm() { this.showSessionForm = !this.showSessionForm; if (!this.showSessionForm) { this.sessionForm.reset({ targetBranch: 'ALL', targetYear: 0 }); } }
+  toggleSessionForm() { 
+    this.showSessionForm = !this.showSessionForm; 
+    this.isEditingSession = false;
+    this.selectedSessionId = null;
+    if (!this.showSessionForm) { 
+      this.sessionForm.reset({ targetBranch: 'ALL', targetYear: 0, mode: 'ONLINE' }); 
+    } 
+  }
+
+  editSession(session: any) {
+    this.showSessionForm = true;
+    this.isEditingSession = true;
+    this.selectedSessionId = session.id;
+    const datetimeStr = session.sessionDatetime ? new Date(session.sessionDatetime).toISOString().slice(0,16) : '';
+    this.sessionForm.patchValue({
+      title: session.title,
+      speaker: session.speaker,
+      sessionDatetime: datetimeStr,
+      targetBranch: session.targetBranch || 'ALL',
+      targetYear: session.targetYear || 0,
+      mode: session.mode || 'ONLINE',
+      joinUrl: session.joinUrl || '',
+      venue: session.venue || '',
+      description: session.description
+    });
+  }
+
   submitSession() {
     if (this.sessionForm.valid) {
       this.isPostingSession = true;
       const v = this.sessionForm.value;
+      if (v.mode === 'ONLINE' && !v.joinUrl) { this.toastService.show('Please provide a meeting link for online session.'); this.isPostingSession = false; return; }
+      if (v.mode === 'OFFLINE' && !v.venue) { this.toastService.show('Please provide a venue for offline session.'); this.isPostingSession = false; return; }
+
       const payload = {
         title: v.title,
         speaker: v.speaker,
         description: v.description,
-        joinUrl: v.joinUrl,
+        joinUrl: v.mode === 'ONLINE' ? v.joinUrl : null,
+        venue: v.mode === 'OFFLINE' ? v.venue : null,
+        mode: v.mode,
         sessionDatetime: v.sessionDatetime ? v.sessionDatetime + ':00+05:30' : null,
         targetBranch: (v.targetBranch === 'ALL' || !v.targetBranch) ? null : v.targetBranch,
         targetYear: (!v.targetYear || v.targetYear === 0) ? null : v.targetYear,
         createdByAdminId: this.adminId
       };
-      this.dashboardService.createSession(payload).subscribe({
-        next: () => { this.isPostingSession = false; this.toggleSessionForm(); this.loadDashboardData(); alert('Session Scheduled Successfully!'); },
-        error: (err) => { this.isPostingSession = false; alert('Failed to schedule session.'); console.error(err); }
-      });
+
+      if (this.isEditingSession && this.selectedSessionId) {
+        this.dashboardService.updateSession(this.selectedSessionId, payload).subscribe({
+          next: () => { this.isPostingSession = false; this.toggleSessionForm(); this.loadDashboardData(); this.toastService.show('Session Updated Successfully!'); },
+          error: (err) => { this.isPostingSession = false; this.toastService.show('Failed to update session.'); console.error(err); }
+        });
+      } else {
+        this.dashboardService.createSession(payload).subscribe({
+          next: () => { this.isPostingSession = false; this.toggleSessionForm(); this.loadDashboardData(); this.toastService.show('Session Scheduled Successfully!'); },
+          error: (err) => { this.isPostingSession = false; this.toastService.show('Failed to schedule session.'); console.error(err); }
+        });
+      }
     } else { this.sessionForm.markAllAsTouched(); }
   }
+
+  cancelSession(id: number) {
+    const reason = prompt("Enter reason for cancelling this session:");
+    if(reason) {
+      this.dashboardService.cancelSession(id, reason).subscribe({
+        next: () => { this.loadDashboardData(); this.toastService.show("Session Cancelled."); },
+        error: () => this.toastService.show("Failed to cancel session.")
+      });
+    }
+  }
+
   deleteSession(id: number) {
-    if(confirm("Are you sure you want to cancel this session?")) {
+    if(confirm("Are you sure you want to permanently delete this past session?")) {
       this.dashboardService.deleteSession(id).subscribe({
-        next: () => { this.allSessions = this.allSessions.filter(s => s.id !== id); this.totalSessions = this.allSessions.length; },
-        error: () => alert("Failed to cancel session.")
+        next: () => { this.loadDashboardData(); },
+        error: () => this.toastService.show("Failed to delete session.")
       });
     }
   }
@@ -266,7 +324,7 @@ export class AdminDashboardComponent implements OnInit {
     this.isFetchingSessionRegistrations = true; this.selectedSessionId = session.id; this.currentSessionName = session.title;
     this.dashboardService.getSessionRegistrations(session.id).subscribe({
       next: (data) => { this.sessionRegistrations = data; this.calculateSessionBranchStats(); this.isFetchingSessionRegistrations = false; },
-      error: (err) => { console.error(err); this.isFetchingSessionRegistrations = false; alert("Could not load registrations."); }
+      error: (err) => { console.error(err); this.isFetchingSessionRegistrations = false; this.toastService.show("Could not load registrations."); }
     });
   }
   calculateSessionBranchStats() {
@@ -286,17 +344,17 @@ export class AdminDashboardComponent implements OnInit {
   
   submitNote() {
     if (this.noteForm.valid) {
-      if (!this.selectedNoteFile) { alert("Please select a file to upload for this note."); return; }
+      if (!this.selectedNoteFile) { this.toastService.show("Please select a file to upload for this note."); return; }
       this.isPostingMaterial = true;
       this.dashboardService.uploadFile(this.selectedNoteFile, 'notes').subscribe({
         next: (uploadResponse) => {
           const payload = { ...this.noteForm.value, fileUrl: uploadResponse.url, uploadedByAdmin: { id: this.adminId } };
           this.dashboardService.createNote(payload).subscribe({
-            next: () => { this.isPostingMaterial = false; this.toggleNoteForm(); this.loadDashboardData(); alert("Study Note uploaded and published successfully!"); },
-            error: () => { this.isPostingMaterial = false; alert("Failed to save note data."); }
+            next: () => { this.isPostingMaterial = false; this.toggleNoteForm(); this.loadDashboardData(); this.toastService.show("Study Note uploaded and published successfully!"); },
+            error: () => { this.isPostingMaterial = false; this.toastService.show("Failed to save note data."); }
           });
         },
-        error: (err) => { this.isPostingMaterial = false; alert("Failed to upload the file to the server."); console.error(err); }
+        error: (err) => { this.isPostingMaterial = false; this.toastService.show("Failed to upload the file to the server."); console.error(err); }
       });
     } else { this.noteForm.markAllAsTouched(); }
   }
@@ -305,15 +363,15 @@ export class AdminDashboardComponent implements OnInit {
     if (this.resourceForm.valid) {
       const type = this.resourceForm.get('type')?.value;
       if (type === 'PDF') {
-        if (!this.selectedResourceFile) { alert("Please select a PDF file to upload."); return; }
+        if (!this.selectedResourceFile) { this.toastService.show("Please select a PDF file to upload."); return; }
         this.isPostingMaterial = true;
         this.dashboardService.uploadFile(this.selectedResourceFile, 'resources').subscribe({
           next: (uploadResponse) => { this.finalizeResourceSubmit({ ...this.resourceForm.value, fileUrl: uploadResponse.url, createdByAdmin: { id: this.adminId } }); },
-          error: (err) => { this.isPostingMaterial = false; alert("Failed to upload PDF resource."); console.error(err); }
+          error: (err) => { this.isPostingMaterial = false; this.toastService.show("Failed to upload PDF resource."); console.error(err); }
         });
       } else {
         const fileUrl = this.resourceForm.get('fileUrl')?.value;
-        if (!fileUrl) { alert("Please provide the Access URL for this resource."); return; }
+        if (!fileUrl) { this.toastService.show("Please provide the Access URL for this resource."); return; }
         this.isPostingMaterial = true;
         this.finalizeResourceSubmit({ ...this.resourceForm.value, createdByAdmin: { id: this.adminId } });
       }
@@ -322,13 +380,13 @@ export class AdminDashboardComponent implements OnInit {
   
   finalizeResourceSubmit(payload: any) {
     this.dashboardService.createResource(payload).subscribe({
-      next: () => { this.isPostingMaterial = false; this.toggleResourceForm(); this.loadDashboardData(); alert("Resource added successfully!"); },
-      error: () => { this.isPostingMaterial = false; alert("Failed to add resource."); }
+      next: () => { this.isPostingMaterial = false; this.toggleResourceForm(); this.loadDashboardData(); this.toastService.show("Resource added successfully!"); },
+      error: () => { this.isPostingMaterial = false; this.toastService.show("Failed to add resource."); }
     });
   }
   
-  deleteResource(id: number) { if(confirm("Are you sure you want to delete this global resource?")) { this.dashboardService.deleteResource(id).subscribe({ next: () => { this.allResources = this.allResources.filter(r => r.id !== id); }, error: () => alert("Failed to delete resource.") }); } }
-  deleteNote(id: number) { if(confirm("Are you sure you want to delete this study note?")) { this.dashboardService.deleteNote(id).subscribe({ next: () => { this.allNotes = this.allNotes.filter(n => n.id !== id); }, error: () => alert("Failed to delete note.") }); } }
+  deleteResource(id: number) { if(confirm("Are you sure you want to delete this global resource?")) { this.dashboardService.deleteResource(id).subscribe({ next: () => { this.allResources = this.allResources.filter(r => r.id !== id); }, error: () => this.toastService.show("Failed to delete resource.") }); } }
+  deleteNote(id: number) { if(confirm("Are you sure you want to delete this study note?")) { this.dashboardService.deleteNote(id).subscribe({ next: () => { this.allNotes = this.allNotes.filter(n => n.id !== id); }, error: () => this.toastService.show("Failed to delete note.") }); } }
 
   // ==========================================
   // STUDENT MANAGEMENT LOGIC
@@ -361,7 +419,7 @@ export class AdminDashboardComponent implements OnInit {
         try { this.selectedStudent.experiencesList = this.selectedStudent.experiences ? JSON.parse(this.selectedStudent.experiences) : []; } catch(e) { this.selectedStudent.experiencesList = []; }
         this.isFetchingStudentProfile = false; 
       },
-      error: () => { this.isFetchingStudentProfile = false; alert("Failed to load student profile."); this.closeStudentProfile(); }
+      error: () => { this.isFetchingStudentProfile = false; this.toastService.show("Failed to load student profile."); this.closeStudentProfile(); }
     });
   }
   closeStudentProfile() { this.selectedStudentId = null; this.selectedStudent = null; }
@@ -369,8 +427,8 @@ export class AdminDashboardComponent implements OnInit {
   deleteStudent(id: number) {
     if(confirm("Are you sure you want to completely remove this student from the system?")) {
       this.dashboardService.deleteStudent(id).subscribe({
-        next: () => { this.allStudents = this.allStudents.filter(s => s.id !== id); this.calculateStudentStats(); this.applyStudentFilters(this.searchQuery, this.filterBranch, this.filterYear); alert("Student deleted successfully."); },
-        error: () => alert("Failed to delete student.")
+        next: () => { this.allStudents = this.allStudents.filter(s => s.id !== id); this.calculateStudentStats(); this.applyStudentFilters(this.searchQuery, this.filterBranch, this.filterYear); this.toastService.show("Student deleted successfully."); },
+        error: () => this.toastService.show("Failed to delete student.")
       });
     }
   }
@@ -382,17 +440,17 @@ export class AdminDashboardComponent implements OnInit {
     this.isFetchingApplicants = true; this.selectedInternshipId = job.id; this.currentInternshipName = `${job.company} - ${job.role}`;
     this.dashboardService.getInternshipApplicants(job.id).subscribe({
       next: (data) => { this.applicantsList = data; this.isFetchingApplicants = false; },
-      error: (err) => { console.error(err); this.isFetchingApplicants = false; alert("Could not load applicants."); }
+      error: (err) => { console.error(err); this.isFetchingApplicants = false; this.toastService.show("Could not load applicants."); }
     });
   }
 
   updateCandidateStatus(application: any, newStatus: string) {
     const targetAppId = application.applicationId || application.id;
-    if (!targetAppId) { alert("Error: Missing Application ID."); return; }
+    if (!targetAppId) { this.toastService.show("Error: Missing Application ID."); return; }
     if(confirm(`Mark ${application.studentName} as ${newStatus}?`)) {
       this.dashboardService['http'].patch(`/api/applications/${targetAppId}/status`, { status: newStatus }).subscribe({
-        next: () => { application.applicationStatus = newStatus; alert(`Candidate successfully marked as ${newStatus}`); },
-        error: (err) => { console.error(err); alert("Failed to update status."); }
+        next: () => { application.applicationStatus = newStatus; this.toastService.show(`Candidate successfully marked as ${newStatus}`); },
+        error: (err) => { console.error(err); this.toastService.show("Failed to update status."); }
       });
     }
   }
@@ -405,8 +463,8 @@ export class AdminDashboardComponent implements OnInit {
       this.isPostingJob = true;
       const payload = { ...this.internshipForm.value, createdByAdmin: { id: this.adminId } };
       this.dashboardService['http'].post('/api/internships/', payload).subscribe({
-        next: () => { this.isPostingJob = false; this.toggleInternshipForm(); this.loadDashboardData(); alert("Internship Posted Successfully!"); },
-        error: (err) => { this.isPostingJob = false; alert("Failed to post internship."); }
+        next: () => { this.isPostingJob = false; this.toggleInternshipForm(); this.loadDashboardData(); this.toastService.show("Internship Posted Successfully!"); },
+        error: (err) => { this.isPostingJob = false; this.toastService.show("Failed to post internship."); }
       });
     } else { this.internshipForm.markAllAsTouched(); }
   }
@@ -432,11 +490,11 @@ export class AdminDashboardComponent implements OnInit {
         this.adminData.aboutMe = res.aboutMe;
         this.adminData.profilePicUrl = res.profilePicUrl;
         this.isSavingAdminProfile = false;
-        alert("Profile updated successfully!");
+        this.toastService.show("Profile updated successfully!");
       },
       error: () => {
         this.isSavingAdminProfile = false;
-        alert("Failed to update profile.");
+        this.toastService.show("Failed to update profile.");
       }
     });
   }
@@ -447,8 +505,8 @@ export class AdminDashboardComponent implements OnInit {
   approveUser(id: number) {
     if(confirm("Are you sure you want to approve this admin? They will receive an email immediately.")) {
       this.dashboardService.approveAdmin(id).subscribe({
-        next: () => { this.pendingAdmins = this.pendingAdmins.filter(admin => admin.id !== id); this.pendingApprovalsCount = this.pendingAdmins.length; alert("Admin Approved Successfully! Email sent."); },
-        error: (err) => alert("Failed to approve admin.")
+        next: () => { this.pendingAdmins = this.pendingAdmins.filter(admin => admin.id !== id); this.pendingApprovalsCount = this.pendingAdmins.length; this.toastService.show("Admin Approved Successfully! Email sent."); },
+        error: (err) => this.toastService.show("Failed to approve admin.")
       });
     }
   }

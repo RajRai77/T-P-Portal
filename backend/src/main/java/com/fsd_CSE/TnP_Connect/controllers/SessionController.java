@@ -42,7 +42,15 @@ public class SessionController {
         session.setTargetBranch(request.getTargetBranch());
         session.setTargetYear(request.getTargetYear());
         session.setSessionDatetime(request.getSessionDatetime());
-        session.setJoinUrl(request.getJoinUrl());
+        session.setMode(request.getMode());
+        if ("ONLINE".equalsIgnoreCase(request.getMode())) {
+            session.setJoinUrl(request.getJoinUrl());
+            session.setVenue(null);
+        } else {
+            session.setVenue(request.getVenue());
+            session.setJoinUrl(null);
+        }
+        session.setStatus("SCHEDULED");
         session.setCreatedByAdmin(admin);
 
         Session savedSession = sessionRepository.save(session);
@@ -86,6 +94,49 @@ public class SessionController {
         return ResponseEntity.noContent().build();
     }
 
+    // 4.1: Update Session
+    @PutMapping("/{id}")
+    public ResponseEntity<SessionResponse> updateSession(@PathVariable Integer id, @RequestBody SessionRequest request) {
+        log.info("Attempting to update session with ID: {}", id);
+        Session session = sessionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found with ID: " + id));
+
+        if (request.getTitle() != null) session.setTitle(request.getTitle());
+        if (request.getDescription() != null) session.setDescription(request.getDescription());
+        if (request.getSpeaker() != null) session.setSpeaker(request.getSpeaker());
+        if (request.getTargetBranch() != null) session.setTargetBranch(request.getTargetBranch());
+        if (request.getTargetYear() != null) session.setTargetYear(request.getTargetYear());
+        if (request.getSessionDatetime() != null) session.setSessionDatetime(request.getSessionDatetime());
+        
+        if (request.getMode() != null) {
+            session.setMode(request.getMode());
+            if ("ONLINE".equalsIgnoreCase(request.getMode())) {
+                session.setJoinUrl(request.getJoinUrl());
+                session.setVenue(null);
+            } else {
+                session.setVenue(request.getVenue());
+                session.setJoinUrl(null);
+            }
+        }
+
+        Session updatedSession = sessionRepository.save(session);
+        return ResponseEntity.ok(convertToResponse(updatedSession));
+    }
+
+    // 4.2: Cancel Session
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<SessionResponse> cancelSession(@PathVariable Integer id, @RequestBody java.util.Map<String, String> body) {
+        log.info("Attempting to cancel session with ID: {}", id);
+        Session session = sessionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found with ID: " + id));
+        
+        session.setStatus("CANCELLED");
+        session.setCancellationReason(body.get("reason"));
+        
+        Session updatedSession = sessionRepository.save(session);
+        return ResponseEntity.ok(convertToResponse(updatedSession));
+    }
+
     // 5: Get all registrations for a specific session
     @GetMapping("/{id}/registrations")
     public ResponseEntity<List<StudentRegistrationSummary>> getSessionRegistrations(@PathVariable Integer id) {
@@ -115,6 +166,10 @@ public class SessionController {
         response.setTargetYear(session.getTargetYear());
         response.setSessionDatetime(session.getSessionDatetime());
         response.setJoinUrl(session.getJoinUrl());
+        response.setMode(session.getMode());
+        response.setVenue(session.getVenue());
+        response.setStatus(session.getStatus());
+        response.setCancellationReason(session.getCancellationReason());
         if (session.getCreatedByAdmin() != null) {
             response.setCreatedByAdminName(session.getCreatedByAdmin().getName());
             response.setCreatedByAdminId(session.getCreatedByAdmin().getId());

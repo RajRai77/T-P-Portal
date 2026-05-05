@@ -1,3 +1,4 @@
+import { ToastService } from '../../../shared/services/toast.service';
 import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { StudentDashboardService } from '../../services/student-dashboard.service';
 import { forkJoin } from 'rxjs';
@@ -149,7 +150,7 @@ export class StudentDashboardComponent implements OnInit, AfterViewChecked {
 
   @ViewChild('chatMessagesEl') chatMessagesEl!: ElementRef<HTMLElement>;
 
-  constructor(
+  constructor(private toastService: ToastService, 
     private dashboardService: StudentDashboardService,
     private router: Router
   ) { }
@@ -311,6 +312,13 @@ export class StudentDashboardComponent implements OnInit, AfterViewChecked {
     this.currentView = view;
     if (view === 'overview') {
       setTimeout(() => this.renderCharts(), 100);
+    }
+    if (view === 'constellation') {
+      if (!this.newSkills || this.newSkills.length === 0) {
+        this.newSkills = [...(this.studentData?.skills || [])];
+        this.editProjects = JSON.parse(JSON.stringify(this.studentData?.projects || []));
+        this.editExperiences = JSON.parse(JSON.stringify(this.studentData?.experiences || []));
+      }
     }
   }
 
@@ -608,7 +616,7 @@ studentSkills=${this.studentData?.skills || ''}
     if (item === 'Interview') elementId = 'interview-preview';
 
     const element = document.getElementById(elementId);
-    if (!element) { alert('Preview not found. Generate content first.'); return; }
+    if (!element) { this.toastService.show('Preview not found. Generate content first.'); return; }
 
     const canvas = await html2canvas(element, { scale: 2, useCORS: true });
     const imgData = canvas.toDataURL('image/png');
@@ -687,23 +695,6 @@ studentSkills=${this.studentData?.skills || ''}
 
   addEditExperience() { this.editExperiences.push({ role: '', company: '', duration: '', description: '' }); }
   removeEditExperience(index: number) { this.editExperiences.splice(index, 1); }
-
-  private readonly skillIconMap: Record<string, string> = {
-    'react': 'react', 'angular': 'angularjs', 'vue': 'vuejs', 'node': 'nodejs',
-    'nodejs': 'nodejs', 'javascript': 'javascript', 'js': 'javascript',
-    'typescript': 'typescript', 'ts': 'typescript', 'python': 'python',
-    'java': 'java', 'spring': 'spring', 'springboot': 'spring',
-    'mysql': 'mysql', 'postgresql': 'postgresql', 'postgres': 'postgresql',
-    'docker': 'docker', 'aws': 'amazonwebservices', 'git': 'git',
-    'figma': 'figma', 'mongodb': 'mongodb', 'html': 'html5', 'css': 'css3',
-    'kotlin': 'kotlin', 'swift': 'swift', 'flutter': 'flutter', 'dart': 'dart'
-  };
-
-  getSkillIcon(skill: string): string {
-    const key = skill.toLowerCase();
-    const iconName = this.skillIconMap[key] || key;
-    return `https://raw.githubusercontent.com/devicons/devicon/master/icons/${iconName}/${iconName}-original.svg`;
-  }
 
   onResumeFileSelect(event: any) {
     const file: File = event.target.files[0];
@@ -787,7 +778,33 @@ studentSkills=${this.studentData?.skills || ''}
   // --- UTILS ---
   getInitials(name: string): string {
     if (!name) return 'S';
-    return name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase();
+    return name.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase();
+  }
+
+  getSkillIcon(skill: string): string {
+    const s = (skill || '').toLowerCase();
+    if (s.includes('react')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg';
+    if (s.includes('angular')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/angularjs/angularjs-original.svg';
+    if (s.includes('vue')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vuejs/vuejs-original.svg';
+    if (s.includes('node')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg';
+    if (s.includes('python')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg';
+    if (s.includes('java')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg';
+    if (s.includes('spring')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/spring/spring-original.svg';
+    if (s.includes('sql') || s.includes('database')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg';
+    if (s.includes('mongo')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mongodb/mongodb-original.svg';
+    if (s.includes('html')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg';
+    if (s.includes('css')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg';
+    if (s.includes('c++') || s.includes('cpp')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg';
+    if (s.includes('js') || s.includes('javascript')) return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg';
+    return 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg'; 
+  }
+
+  ensureAbsoluteUrl(url: string): string {
+    if (!url) return '#';
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return 'https://' + url;
+    }
+    return url;
   }
 
   logout(): void {
