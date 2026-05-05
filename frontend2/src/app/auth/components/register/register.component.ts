@@ -106,7 +106,7 @@ export class RegisterComponent implements OnInit {
       },
       error: (err) => {
         this.otpSending = false;
-        this.errorMessage = err.error?.message || 'Failed to send OTP. Please try again.';
+        this.errorMessage = err.error?.message || (typeof err.error === 'string' ? err.error : 'Failed to send OTP. Please try again.');
       }
     });
   }
@@ -137,7 +137,7 @@ export class RegisterComponent implements OnInit {
       },
       error: (err) => {
         this.otpVerifying = false;
-        this.errorMessage = err.error?.message || 'Invalid or expired OTP. Please try again.';
+        this.errorMessage = err.error?.message || (typeof err.error === 'string' ? err.error : 'Invalid or expired OTP. Please try again.');
       }
     });
   }
@@ -183,7 +183,7 @@ export class RegisterComponent implements OnInit {
           },
           error: (err) => {
             this.isLoading = false;
-            this.errorMessage = err.error?.message || 'Student registration failed. Is the backend running?';
+            this.errorMessage = err.error?.message || (typeof err.error === 'string' ? err.error : 'Student registration failed. Is the backend running?');
           }
         });
       } else {
@@ -207,7 +207,7 @@ export class RegisterComponent implements OnInit {
           },
           error: (err) => {
             this.isLoading = false;
-            this.errorMessage = err.error?.message || 'Admin registration failed. Email might be in use.';
+            this.errorMessage = err.error?.message || (typeof err.error === 'string' ? err.error : 'Admin registration failed. Email might be in use.');
           }
         });
       } else {

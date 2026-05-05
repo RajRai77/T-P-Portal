@@ -78,7 +78,8 @@ export class LoginComponent implements OnInit {
         },
         error: (err) => {
           this.isLoading = false;
-          this.errorMessage = err.error?.message || 'Invalid credentials or account access denied.';
+          // Spring Boot typically sends the message in err.error.message or err.error if it's a string.
+          this.errorMessage = err.error?.message || (typeof err.error === 'string' ? err.error : 'Invalid credentials or account access denied.');
         }
       });
     } else {
@@ -127,7 +128,7 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.forgotLoading = false;
-        this.forgotError = err.error?.message || 'No account found with this email.';
+        this.forgotError = err.error?.message || (typeof err.error === 'string' ? err.error : 'No account found with this email.');
       }
     });
   }
@@ -162,7 +163,7 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.forgotLoading = false;
-        this.forgotError = err.error?.message || 'Invalid or expired OTP. Please try again.';
+        this.forgotError = err.error?.message || (typeof err.error === 'string' ? err.error : 'Invalid or expired OTP. Please try again.');
       }
     });
   }
