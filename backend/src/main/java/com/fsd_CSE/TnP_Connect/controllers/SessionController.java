@@ -86,10 +86,13 @@ public class SessionController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSession(@PathVariable Integer id) {
         log.warn("Attempting to delete session with ID: {}", id);
-        if (!sessionRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Session not found with ID: " + id);
-        }
-        sessionRepository.deleteById(id);
+        Session session = sessionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Session not found with ID: " + id));
+                
+        // Safely detach from admin (though not strictly necessary as admin doesn't own session collection)
+        session.setCreatedByAdmin(null);
+        
+        sessionRepository.delete(session);
         log.info("Successfully deleted session with ID: {}", id);
         return ResponseEntity.noContent().build();
     }

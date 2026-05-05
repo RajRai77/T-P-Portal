@@ -36,6 +36,7 @@ export class AdminDashboardComponent implements OnInit {
 
   // Session View
   currentSessionName = ''; selectedSessionId: number | null = null; sessionRegistrations: any[] = [];
+  viewingRegistrationsSessionId: number | null = null;
   sessionBranchStats: {branch: string, count: number}[] = []; isFetchingSessionRegistrations = false;
   isEditingSession = false;
 
@@ -54,6 +55,43 @@ export class AdminDashboardComponent implements OnInit {
   // Admin Edit Profile
   editAdminName = ''; editAdminPhone = ''; editAdminLinkedin = ''; editAdminAboutMe = ''; editAdminProfilePicUrl = '';
   isSavingAdminProfile = false;
+
+  
+  // --- CONFIRM MODAL ---
+  showModal = false;
+  modalTitle = '';
+  modalMessage = '';
+  pendingAction: (() => void) | null = null;
+  isPromptMode = false;
+  promptInputValue = '';
+
+  openConfirmModal(title: string, message: string, action: () => void) {
+    this.modalTitle = title;
+    this.modalMessage = message;
+    this.pendingAction = action;
+    this.isPromptMode = false;
+    this.showModal = true;
+  }
+
+  openPromptModal(title: string, message: string, action: (input: string) => void) {
+    this.modalTitle = title;
+    this.modalMessage = message;
+    this.isPromptMode = true;
+    this.promptInputValue = '';
+    this.pendingAction = () => action(this.promptInputValue);
+    this.showModal = true;
+  }
+
+  closeModal() {
+    this.showModal = false;
+    this.pendingAction = null;
+    this.promptInputValue = '';
+  }
+
+  confirmModalAction() {
+    if (this.pendingAction) { this.pendingAction(); }
+    this.closeModal();
+  }
 
   constructor(private toastService: ToastService, private dashboardService: AdminDashboardService, private router: Router, private fb: FormBuilder) {}
 
@@ -200,12 +238,12 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   deleteContest(id: number) {
-    if(confirm("Delete this contest?")) {
+    this.openConfirmModal("Delete Contest", "Delete this contest?", () => {
       this.dashboardService.deleteContest(id).subscribe({
         next: () => { this.allContests = this.allContests.filter(c => c.id !== id); this.totalContests = this.allContests.length; },
         error: () => this.toastService.show("Failed to delete.")
       });
-    }
+    });
   }
 
   // ==========================================
@@ -230,12 +268,12 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   deleteNotification(id: number) {
-    if(confirm("Delete this announcement?")) {
+    this.openConfirmModal("Delete Announcement", "Delete this announcement?", () => {
       this.dashboardService.deleteNotification(id).subscribe({
         next: () => { this.allNotifications = this.allNotifications.filter(n => n.id !== id); },
         error: () => this.toastService.show("Failed to delete.")
       });
-    }
+    });
   }
 
   // ==========================================
@@ -245,6 +283,7 @@ export class AdminDashboardComponent implements OnInit {
     this.showSessionForm = !this.showSessionForm; 
     this.isEditingSession = false;
     this.selectedSessionId = null;
+    this.viewingRegistrationsSessionId = null;
     if (!this.showSessionForm) { 
       this.sessionForm.reset({ targetBranch: 'ALL', targetYear: 0, mode: 'ONLINE' }); 
     } 
@@ -385,8 +424,8 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
   
-  deleteResource(id: number) { if(confirm("Are you sure you want to delete this global resource?")) { this.dashboardService.deleteResource(id).subscribe({ next: () => { this.allResources = this.allResources.filter(r => r.id !== id); }, error: () => this.toastService.show("Failed to delete resource.") }); } }
-  deleteNote(id: number) { if(confirm("Are you sure you want to delete this study note?")) { this.dashboardService.deleteNote(id).subscribe({ next: () => { this.allNotes = this.allNotes.filter(n => n.id !== id); }, error: () => this.toastService.show("Failed to delete note.") }); } }
+  deleteResource(id: number) { this.openConfirmModal("Delete Resource", "Are you sure you want to delete this global resource?", () => { this.dashboardService.deleteResource(id).subscribe({ next: () => { this.allResources = this.allResources.filter(r => r.id !== id); }, error: () => this.toastService.show("Failed to delete resource.") }); }); }
+  deleteNote(id: number) { this.openConfirmModal("Delete Note", "Are you sure you want to delete this study note?", () => { this.dashboardService.deleteNote(id).subscribe({ next: () => { this.allNotes = this.allNotes.filter(n => n.id !== id); }, error: () => this.toastService.show("Failed to delete note.") }); }); }
 
   // ==========================================
   // STUDENT MANAGEMENT LOGIC
