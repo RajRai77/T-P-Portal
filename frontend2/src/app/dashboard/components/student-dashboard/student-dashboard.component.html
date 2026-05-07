@@ -257,7 +257,7 @@
 
                 <div *ngSwitchCase="'experience'">
                   <h3>Experience</h3>
-                  <div *ngFor="let exp of resumeExperiences; let i=index" class="dynamic-entry-box drag-item"
+                  <div *ngFor="let exp of resumeExperiences; let i=index; trackBy: trackByIndex" class="dynamic-entry-box drag-item"
                     draggable="true" (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
                     (drop)="onSectionDrop(resumeExperiences, $event)" [class.drag-over]="dragoverIndex===i">
                     <div class="drag-handle" title="Drag to reorder inner"><svg class="inline-icon" viewBox="0 0 24 24">
@@ -288,7 +288,32 @@
                 
                 <div *ngSwitchCase="'projects'">
                   <h3>Projects</h3>
-                  <div *ngFor="let proj of resumeProjects; let i=index" class="dynamic-entry-box drag-item"
+                  <div *ngFor="let proj of resumeProjects; let i=index; trackBy: trackByIndex" class="dynamic-entry-box drag-item"
+                    draggable="true" (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
+                    (drop)="onSectionDrop(resumeProjects, $event)" [class.drag-over]="dragoverIndex===i">
+                    <div class="drag-handle" title="Drag to reorder inner"><svg class="inline-icon" viewBox="0 0 24 24">
+                        <circle cx="9" cy="12" r="1" /><circle cx="9" cy="5" r="1" /><circle cx="9" cy="19" r="1" />
+                        <circle cx="15" cy="12" r="1" /><circle cx="15" cy="5" r="1" /><circle cx="15" cy="19" r="1" />
+                      </svg></div>
+                    <button class="close-btn" (click)="removeResumeProject(i)" title="Delete"
+                      style="position:absolute; top:8px; right:12px; font-size:1.6rem; color:#dc2626;"><svg
+                        class="inline-icon" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg></button>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem; width: 90%;">
+                      <input type="text" class="ai-input" placeholder="Project Title" [(ngModel)]="proj.title">
+                      <input type="text" class="ai-input" placeholder="Tech Stack" [(ngModel)]="proj.techStack">
+                    </div>
+                    <input type="text" class="ai-input w-full" placeholder="Project Link" [(ngModel)]="proj.link"
+                      style="margin-bottom:0.75rem">
+                    <textarea class="ai-input w-full" rows="2" placeholder="Description" [(ngModel)]="proj.description"></textarea>
+                  </div>
+                  <button class="btn-ghost-sm" (click)="addResumeProject()">+ Add Project</button>
+                </div>
+
+                <div *ngSwitchCase="'projects'" class="ai-section-card" style="margin-top:0;">
+                  <h3>Projects</h3>
+                  <div *ngFor="let proj of resumeProjects; let i = index; trackBy: trackByIndex" class="dynamic-entry-box drag-item"
                     draggable="true" (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
                     (drop)="onSectionDrop(resumeProjects, $event)" [class.drag-over]="dragoverIndex===i">
                     <div class="drag-handle" title="Drag to reorder inner"><svg class="inline-icon" viewBox="0 0 24 24">
@@ -330,7 +355,7 @@
 
                     <div *ngSwitchCase="'education'">
                   <h3>Education</h3>
-                  <div *ngFor="let edu of resumeEducations; let i=index" class="dynamic-entry-box drag-item"
+                  <div *ngFor="let edu of resumeEducations; let i=index; trackBy: trackByIndex" class="dynamic-entry-box drag-item"
                     draggable="true" (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
                     (drop)="onSectionDrop(resumeEducations, $event)" [class.drag-over]="dragoverIndex===i">
                     <div class="drag-handle" title="Drag to reorder inner"><svg class="inline-icon" viewBox="0 0 24 24">
@@ -365,7 +390,7 @@
 
                 <div *ngSwitchCase="'custom'">
                   <h3>Custom Sections</h3>
-                  <div *ngFor="let section of customSections; let i = index"
+                  <div *ngFor="let section of customSections; let i = index; trackBy: trackByIndex"
                     style="margin-top:1rem; border-left: 4px solid var(--signal-orange); position:relative" draggable="true"
                     (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
                     (drop)="onSectionDrop(customSections, $event)" [class.drag-over]="dragoverIndex===i">
@@ -407,8 +432,12 @@
                 <button class="btn-ghost-sm" [class.active-template]="selectedTemplate==='casual'" (click)="selectedTemplate='casual'" style="border:1px solid #ccc; background:#fff;">Casual</button>
                 
                 <select [(ngModel)]="resumeFontSize" class="ai-input" style="padding: 0.2rem 0.5rem; height: auto;">
+                  <option value="10px">10px</option>
+                  <option value="11px">11px</option>
                   <option value="12px">12px</option>
+                  <option value="13px">13px</option>
                   <option value="14px">14px</option>
+                  <option value="15px">15px</option>
                   <option value="16px">16px</option>
                 </select>
                 <input type="color" [(ngModel)]="resumeThemeColor" style="height: 25px; width: 40px; border: none; background: transparent; cursor: pointer;" title="Theme Color">

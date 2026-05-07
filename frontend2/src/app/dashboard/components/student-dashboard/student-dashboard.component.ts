@@ -835,6 +835,8 @@ studentSkills=${this.studentData?.skills || ''}
     this.mainDragoverIndex = -1;
   }
 
+  trackByIndex(index: number, item: any) { return index; }
+
   // --- AUTO POPULATE RESUME ---
   autoPopulateResume() {
     if (!this.studentData) return;
