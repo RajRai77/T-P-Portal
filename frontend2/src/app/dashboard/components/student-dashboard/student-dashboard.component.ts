@@ -101,6 +101,9 @@ export class StudentDashboardComponent implements OnInit, AfterViewChecked {
   resumeExperiences: any[] = [{ title: '', company: '', date: '', description: '' }];
   resumeEducations: any[] = [{ degree: '', institution: '', date: '', description: '' }];
   customSections: { title: string, content: string }[] = []; // NEW Custom Sections
+  resumeSectionOrder: string[] = ['personal', 'experience', 'education', 'skills', 'hobbies', 'custom'];
+  selectedTemplate: 'ats' | 'professional' | 'casual' = 'ats';
+  resumeProjects: any[] = [];
   resumeLoading = false;
   resumeResult = '';
   resumeTips: string[] = [];
@@ -232,6 +235,7 @@ export class StudentDashboardComponent implements OnInit, AfterViewChecked {
     }).subscribe({
       next: (result) => {
         this.studentData = result.student;
+        this.autoPopulateResume();
         this.myApplications = result.student.internshipApplications || [];
         this.applicationsCount = this.myApplications.length;
         this.myRegistrations = result.student.sessionRegistrations || [];
@@ -805,6 +809,51 @@ studentSkills=${this.studentData?.skills || ''}
       return 'https://' + url;
     }
     return url;
+  }
+
+
+  // --- MAIN RESUME DRAG-DROP ---
+  mainDragIndex = -1;
+  mainDragoverIndex = -1;
+
+  onMainDragStart(index: number) { this.mainDragIndex = index; }
+  onMainDragOver(event: DragEvent, index: number) {
+    event.preventDefault();
+    this.mainDragoverIndex = index;
+  }
+  onMainDrop(event: DragEvent) {
+    event.preventDefault();
+    if (this.mainDragIndex >= 0 && this.mainDragoverIndex >= 0 && this.mainDragIndex !== this.mainDragoverIndex) {
+      const moved = this.resumeSectionOrder.splice(this.mainDragIndex, 1)[0];
+      this.resumeSectionOrder.splice(this.mainDragoverIndex, 0, moved);
+    }
+    this.mainDragIndex = -1;
+    this.mainDragoverIndex = -1;
+  }
+
+  // --- AUTO POPULATE RESUME ---
+  autoPopulateResume() {
+    if (!this.studentData) return;
+    const names = (this.studentData.name || '').split(' ');
+    this.resumeFirstName = names[0] || '';
+    this.resumeLastName = names.slice(1).join(' ') || '';
+    this.resumeEmail = this.studentData.email || '';
+    this.resumeRole = this.studentData.branch || '';
+    this.resumeSkills = this.studentData.skills || '';
+    
+    try {
+      if (this.studentData.experiences) {
+        this.resumeExperiences = JSON.parse(this.studentData.experiences);
+        if(!Array.isArray(this.resumeExperiences) || this.resumeExperiences.length === 0) {
+          this.resumeExperiences = [{ title: '', company: '', date: '', description: '' }];
+        }
+      }
+    } catch(e) {}
+    try {
+      if (this.studentData.projects) {
+        this.resumeProjects = JSON.parse(this.studentData.projects);
+      }
+    } catch(e) {}
   }
 
   logout(): void {

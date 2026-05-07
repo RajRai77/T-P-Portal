@@ -221,6 +221,7 @@
             Interview</button>
         </div>
 
+        
         <div *ngIf="activeAiFeature==='resume'" class="ai-builder-layout">
           <div class="ai-builder-left">
             <div class="ai-builder-intro">
@@ -229,204 +230,226 @@
                 structure and elevate your narrative in real-time.</p>
             </div>
 
-            <div class="ai-section-card">
-              <h3>Personal Info</h3>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-                <input type="text" class="ai-input" placeholder="First Name" [(ngModel)]="resumeFirstName">
-                <input type="text" class="ai-input" placeholder="Last Name" [(ngModel)]="resumeLastName">
+            <div *ngFor="let sectionKey of resumeSectionOrder; let sectionIndex = index"
+                 class="ai-section-card drag-item"
+                 style="margin-top:1rem; position:relative;"
+                 draggable="true" 
+                 (dragstart)="onMainDragStart(sectionIndex)" 
+                 (dragover)="onMainDragOver($event, sectionIndex)"
+                 (drop)="onMainDrop($event)" 
+                 [class.drag-over]="mainDragoverIndex === sectionIndex">
+              
+              <div class="drag-handle" title="Drag to reorder section" style="top: 20px;">
+                <svg class="inline-icon" viewBox="0 0 24 24"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>
               </div>
-              <input type="email" class="ai-input w-full" placeholder="Professional Email" [(ngModel)]="resumeEmail"
-                style="margin-bottom:1rem">
-              <input type="text" class="ai-input w-full" placeholder="Target Role / Headline" [(ngModel)]="resumeRole">
-            </div>
 
-            <div class="ai-section-card" style="margin-top:1rem">
-              <h3>Experience</h3>
-              <div *ngFor="let exp of resumeExperiences; let i=index" class="dynamic-entry-box drag-item"
-                draggable="true" (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
-                (drop)="onSectionDrop(resumeExperiences, $event)" [class.drag-over]="dragoverIndex===i">
-                <div class="drag-handle" title="Drag to reorder"><svg class="inline-icon" viewBox="0 0 24 24">
-                    <circle cx="9" cy="12" r="1" />
-                    <circle cx="9" cy="5" r="1" />
-                    <circle cx="9" cy="19" r="1" />
-                    <circle cx="15" cy="12" r="1" />
-                    <circle cx="15" cy="5" r="1" />
-                    <circle cx="15" cy="19" r="1" />
-                  </svg></div>
-                <button class="close-btn" (click)="removeExperience(i)" title="Delete"
-                  style="position:absolute; top:8px; right:12px; font-size:1.6rem; color:#dc2626;"><svg
-                    class="inline-icon" viewBox="0 0 24 24">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg></button>
-                <input type="text" class="ai-input w-full" placeholder="Role Title" [(ngModel)]="exp.title"
-                  style="margin-bottom:0.75rem; width: 90%;">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">
-                  <input type="text" class="ai-input" placeholder="Company" [(ngModel)]="exp.company">
-                  <input type="text" class="ai-input" placeholder="Date (e.g. 2023-Present)" [(ngModel)]="exp.date">
+              <ng-container [ngSwitch]="sectionKey">
+                
+                <div *ngSwitchCase="'personal'">
+                  <h3>Personal Info</h3>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+                    <input type="text" class="ai-input" placeholder="First Name" [(ngModel)]="resumeFirstName">
+                    <input type="text" class="ai-input" placeholder="Last Name" [(ngModel)]="resumeLastName">
+                  </div>
+                  <input type="email" class="ai-input w-full" placeholder="Professional Email" [(ngModel)]="resumeEmail" style="margin-bottom:1rem">
+                  <input type="text" class="ai-input w-full" placeholder="Target Role / Headline" [(ngModel)]="resumeRole">
                 </div>
-                <textarea class="ai-input w-full" rows="2" placeholder="Description"
-                  [(ngModel)]="exp.description"></textarea>
-              </div>
-              <button class="btn-ghost-sm" (click)="addExperience()">+ Add Role</button>
-            </div>
 
-            <div class="ai-section-card" style="margin-top:1rem">
-              <h3>Skills & Tools</h3>
-              <input type="text" class="ai-input w-full" placeholder="e.g. React, Figma, Python"
-                [(ngModel)]="resumeSkills">
-            </div>
-
-            <div class="ai-section-card" style="margin-top:1rem">
-              <h3>Education</h3>
-              <div *ngFor="let edu of resumeEducations; let i=index" class="dynamic-entry-box drag-item"
-                draggable="true" (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
-                (drop)="onSectionDrop(resumeEducations, $event)" [class.drag-over]="dragoverIndex===i">
-                <div class="drag-handle" title="Drag to reorder"><svg class="inline-icon" viewBox="0 0 24 24">
-                    <circle cx="9" cy="12" r="1" />
-                    <circle cx="9" cy="5" r="1" />
-                    <circle cx="9" cy="19" r="1" />
-                    <circle cx="15" cy="12" r="1" />
-                    <circle cx="15" cy="5" r="1" />
-                    <circle cx="15" cy="19" r="1" />
-                  </svg></div>
-                <button class="close-btn" (click)="removeEducation(i)" title="Delete"
-                  style="position:absolute; top:8px; right:12px; font-size:1.6rem; color:#dc2626;"><svg
-                    class="inline-icon" viewBox="0 0 24 24">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg></button>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem; width: 90%;">
-                  <input type="text" class="ai-input" placeholder="Degree" [(ngModel)]="edu.degree">
-                  <input type="text" class="ai-input" placeholder="Institution" [(ngModel)]="edu.institution">
+                <div *ngSwitchCase="'experience'">
+                  <h3>Experience</h3>
+                  <div *ngFor="let exp of resumeExperiences; let i=index" class="dynamic-entry-box drag-item"
+                    draggable="true" (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
+                    (drop)="onSectionDrop(resumeExperiences, $event)" [class.drag-over]="dragoverIndex===i">
+                    <div class="drag-handle" title="Drag to reorder inner"><svg class="inline-icon" viewBox="0 0 24 24">
+                        <circle cx="9" cy="12" r="1" />
+                        <circle cx="9" cy="5" r="1" />
+                        <circle cx="9" cy="19" r="1" />
+                        <circle cx="15" cy="12" r="1" />
+                        <circle cx="15" cy="5" r="1" />
+                        <circle cx="15" cy="19" r="1" />
+                      </svg></div>
+                    <button class="close-btn" (click)="removeExperience(i)" title="Delete"
+                      style="position:absolute; top:8px; right:12px; font-size:1.6rem; color:#dc2626;"><svg
+                        class="inline-icon" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg></button>
+                    <input type="text" class="ai-input w-full" placeholder="Role Title" [(ngModel)]="exp.title"
+                      style="margin-bottom:0.75rem; width: 90%;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">
+                      <input type="text" class="ai-input" placeholder="Company" [(ngModel)]="exp.company">
+                      <input type="text" class="ai-input" placeholder="Date (e.g. 2023-Present)" [(ngModel)]="exp.date">
+                    </div>
+                    <textarea class="ai-input w-full" rows="2" placeholder="Description" [(ngModel)]="exp.description"></textarea>
+                  </div>
+                  <button class="btn-ghost-sm" (click)="addExperience()">+ Add Role</button>
                 </div>
-                <input type="text" class="ai-input w-full" placeholder="Dates" [(ngModel)]="edu.date"
-                  style="margin-bottom:0.75rem">
-                <textarea class="ai-input w-full" rows="2" placeholder="Achievements/CGPA"
-                  [(ngModel)]="edu.description"></textarea>
-              </div>
-              <button class="btn-ghost-sm" (click)="addEducation()">+ Add Education</button>
-            </div>
 
-            <div class="ai-section-card" style="margin-top:1rem">
-              <h3>Hobbies</h3>
-              <textarea class="ai-input w-full" rows="2" placeholder="Your hobbies..."
-                [(ngModel)]="resumeHobbies"></textarea>
-            </div>
+                <div *ngSwitchCase="'skills'">
+                  <h3>Skills & Tools</h3>
+                  <input type="text" class="ai-input w-full" placeholder="e.g. React, Figma, Python" [(ngModel)]="resumeSkills">
+                </div>
 
-            <div class="ai-section-card" *ngFor="let section of customSections; let i = index"
-              style="margin-top:1rem; border-left: 4px solid var(--signal-orange); position:relative" draggable="true"
-              (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
-              (drop)="onSectionDrop(customSections, $event)" [class.drag-over]="dragoverIndex===i">
-              <div class="drag-handle" title="Drag to reorder"><svg class="inline-icon" viewBox="0 0 24 24">
-                  <circle cx="9" cy="12" r="1" />
-                  <circle cx="9" cy="5" r="1" />
-                  <circle cx="9" cy="19" r="1" />
-                  <circle cx="15" cy="12" r="1" />
-                  <circle cx="15" cy="5" r="1" />
-                  <circle cx="15" cy="19" r="1" />
-                </svg></div>
-              <div
-                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid rgba(0,0,0,0.08); padding-bottom:0.75rem;">
-                <input type="text" class="ai-input" placeholder="Section Title (e.g. Certifications)"
-                  [(ngModel)]="section.title"
-                  style="font-weight:700; border:none; background:transparent; padding:0; font-size:1.1rem; width:80%;">
-                <button class="close-btn" (click)="removeCustomSection(i)" title="Delete custom section"
-                  style="font-size:1.6rem; color:#dc2626;"><svg class="inline-icon" viewBox="0 0 24 24">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg></button>
-              </div>
-              <textarea class="ai-input w-full" rows="3" placeholder="Enter details here..."
-                [(ngModel)]="section.content"></textarea>
-            </div>
+                <div *ngSwitchCase="'education'">
+                  <h3>Education</h3>
+                  <div *ngFor="let edu of resumeEducations; let i=index" class="dynamic-entry-box drag-item"
+                    draggable="true" (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
+                    (drop)="onSectionDrop(resumeEducations, $event)" [class.drag-over]="dragoverIndex===i">
+                    <div class="drag-handle" title="Drag to reorder inner"><svg class="inline-icon" viewBox="0 0 24 24">
+                        <circle cx="9" cy="12" r="1" />
+                        <circle cx="9" cy="5" r="1" />
+                        <circle cx="9" cy="19" r="1" />
+                        <circle cx="15" cy="12" r="1" />
+                        <circle cx="15" cy="5" r="1" />
+                        <circle cx="15" cy="19" r="1" />
+                      </svg></div>
+                    <button class="close-btn" (click)="removeEducation(i)" title="Delete"
+                      style="position:absolute; top:8px; right:12px; font-size:1.6rem; color:#dc2626;"><svg
+                        class="inline-icon" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg></button>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem; width: 90%;">
+                      <input type="text" class="ai-input" placeholder="Degree" [(ngModel)]="edu.degree">
+                      <input type="text" class="ai-input" placeholder="Institution" [(ngModel)]="edu.institution">
+                    </div>
+                    <input type="text" class="ai-input w-full" placeholder="Dates" [(ngModel)]="edu.date"
+                      style="margin-bottom:0.75rem">
+                    <textarea class="ai-input w-full" rows="2" placeholder="Achievements/CGPA" [(ngModel)]="edu.description"></textarea>
+                  </div>
+                  <button class="btn-ghost-sm" (click)="addEducation()">+ Add Education</button>
+                </div>
 
-            <div class="ai-section-card"
-              style="margin-top:1rem; border: 2px dashed rgba(207, 69, 0, 0.4); background: rgba(207, 69, 0, 0.02); text-align: center; cursor: pointer; transition: all 0.2s;"
-              (click)="addCustomSection()">
-              <h3 style="border: none; margin: 0; color: var(--signal-orange);">+ Add Custom Section</h3>
-              <p style="font-size: 0.85rem; color: var(--slate-gray); margin: 0;">Add Custom fields like Certifications,
-                Languages, Projects, etc.</p>
-            </div>
+                <div *ngSwitchCase="'hobbies'">
+                  <h3>Hobbies</h3>
+                  <textarea class="ai-input w-full" rows="2" placeholder="Your hobbies..." [(ngModel)]="resumeHobbies"></textarea>
+                </div>
 
+                <div *ngSwitchCase="'custom'">
+                  <h3>Custom Sections</h3>
+                  <div *ngFor="let section of customSections; let i = index"
+                    style="margin-top:1rem; border-left: 4px solid var(--signal-orange); position:relative" draggable="true"
+                    (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
+                    (drop)="onSectionDrop(customSections, $event)" [class.drag-over]="dragoverIndex===i">
+                    <div class="drag-handle" title="Drag to reorder inner"><svg class="inline-icon" viewBox="0 0 24 24">
+                        <circle cx="9" cy="12" r="1" />
+                        <circle cx="9" cy="5" r="1" />
+                        <circle cx="9" cy="19" r="1" />
+                        <circle cx="15" cy="12" r="1" />
+                        <circle cx="15" cy="5" r="1" />
+                        <circle cx="15" cy="19" r="1" />
+                      </svg></div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid rgba(0,0,0,0.08); padding-bottom:0.75rem;">
+                      <input type="text" class="ai-input" placeholder="Section Title (e.g. Certifications)" [(ngModel)]="section.title"
+                        style="font-weight:700; border:none; background:transparent; padding:0; font-size:1.1rem; width:80%;">
+                      <button class="close-btn" (click)="removeCustomSection(i)" title="Delete custom section"
+                        style="font-size:1.6rem; color:#dc2626;"><svg class="inline-icon" viewBox="0 0 24 24">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg></button>
+                    </div>
+                    <textarea class="ai-input w-full" rows="3" placeholder="Enter details here..." [(ngModel)]="section.content"></textarea>
+                  </div>
+
+                  <div style="margin-top:1rem; border: 2px dashed rgba(207, 69, 0, 0.4); background: rgba(207, 69, 0, 0.02); text-align: center; cursor: pointer; transition: all 0.2s; padding: 1rem;"
+                    (click)="addCustomSection()">
+                    <h4 style="border: none; margin: 0; color: var(--signal-orange);">+ Add Custom Section</h4>
+                  </div>
+                </div>
+
+              </ng-container>
+            </div>
           </div>
 
           <div class="ai-builder-right">
-            <div class="ai-builder-actions">
-              <button class="btn-ai-optimize" (click)="generateResume()"
-                [disabled]="resumeLoading">{{resumeLoading?'Optimizing...':'AI Optimize Layout'}}</button>
-              <button class="btn-export-pdf" (click)="exportItem('Resume')"><svg class="inline-icon"
-                  viewBox="0 0 24 24">
-                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                  <polyline points="14 2 14 8 20 8" />
-                </svg> Export PDF</button>
+            <div class="ai-builder-actions" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+              <div class="template-selector" style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                <button class="btn-ghost-sm" [class.active-template]="selectedTemplate==='ats'" (click)="selectedTemplate='ats'" style="border:1px solid #ccc; background:#fff;">ATS</button>
+                <button class="btn-ghost-sm" [class.active-template]="selectedTemplate==='professional'" (click)="selectedTemplate='professional'" style="border:1px solid #ccc; background:#fff;">Professional</button>
+                <button class="btn-ghost-sm" [class.active-template]="selectedTemplate==='casual'" (click)="selectedTemplate='casual'" style="border:1px solid #ccc; background:#fff;">Casual</button>
+              </div>
+              <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+                <button class="btn-ai-optimize" (click)="generateResume()" [disabled]="resumeLoading">{{resumeLoading?'Optimizing...':'AI Optimize Layout'}}</button>
+                <button class="btn-export-pdf" (click)="exportItem('Resume')"><svg class="inline-icon" viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /></svg> Export PDF</button>
+              </div>
             </div>
 
-            <div class="preview-canvas" id="resume-preview">
+            <div class="preview-canvas" id="resume-preview" [ngClass]="'resume-template-' + selectedTemplate">
               <!-- AI RESULT: formatted structured view -->
               <div *ngIf="resumeResult" class="resume-preview-doc">
-                <div class="preview-section-title" style="color:var(--signal-orange);margin-bottom:1.25rem"><svg
-                    class="inline-icon" viewBox="0 0 24 24">
-                    <path
-                      d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-                    <path d="M5 3v4" />
-                    <path d="M3 5h4" />
-                    <path d="M19 17v4" />
-                    <path d="M17 19h4" />
-                  </svg> AI OPTIMIZED RESUME</div>
+                <div class="preview-section-title" style="color:var(--signal-orange);margin-bottom:1.25rem"><svg class="inline-icon" viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /><path d="M5 3v4" /><path d="M3 5h4" /><path d="M19 17v4" /><path d="M17 19h4" /></svg> AI OPTIMIZED RESUME</div>
                 <pre class="ai-formatted-doc">{{resumeResult}}</pre>
               </div>
 
               <!-- LIVE PREVIEW -->
               <div *ngIf="!resumeResult">
-                <div *ngIf="resumeFirstName||resumeLastName"
-                  style="text-align:center;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:2px solid var(--border-color)">
-                  <h2 style="margin:0;font-size:1.5rem;letter-spacing:1px;text-transform:uppercase">{{resumeFirstName}}
-                    {{resumeLastName}}</h2>
-                  <p style="color:var(--signal-orange);font-weight:600;margin:0.25rem 0">{{resumeRole}}</p>
-                  <p style="color:var(--slate-gray);font-size:0.85rem;margin:0">{{resumeEmail}}</p>
-                </div>
-                <div *ngIf="resumeExperiences[0]?.title" style="margin-bottom:1rem">
-                  <div class="preview-section-title">EXPERIENCE</div>
-                  <div *ngFor="let exp of resumeExperiences" style="margin-bottom:0.75rem">
-                    <div style="display:flex;justify-content:space-between"><strong>{{exp.title}}</strong><span
-                        style="font-size:0.8rem;color:var(--slate-gray)">{{exp.date}}</span></div>
-                    <div style="color:var(--signal-orange);font-size:0.85rem">{{exp.company}}</div>
-                    <p style="color:var(--slate-gray);font-size:0.85rem;margin:0.25rem 0 0">{{exp.description}}</p>
-                  </div>
-                </div>
-                <div *ngIf="resumeEducations[0]?.degree" style="margin-bottom:1rem">
-                  <div class="preview-section-title">EDUCATION</div>
-                  <div *ngFor="let edu of resumeEducations" style="margin-bottom:0.5rem">
-                    <div style="display:flex;justify-content:space-between"><strong>{{edu.degree}}</strong><span
-                        style="font-size:0.8rem;color:var(--slate-gray)">{{edu.date}}</span></div>
-                    <div style="color:var(--signal-orange);font-size:0.85rem">{{edu.institution}}</div>
-                    <p style="color:var(--slate-gray);font-size:0.85rem;margin:0.25rem 0 0">{{edu.description}}</p>
-                  </div>
-                </div>
-                <div *ngIf="resumeSkills" style="margin-bottom:1rem">
-                  <div class="preview-section-title">SKILLS</div>
-                  <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem">
-                    <span *ngFor="let s of resumeSkills.split(',')" class="preview-skill-chip">{{s.trim()}}</span>
-                  </div>
-                </div>
-                <div *ngIf="resumeHobbies" style="margin-bottom:1rem">
-                  <div class="preview-section-title">HOBBIES</div>
-                  <p style="color:var(--slate-gray);font-size:0.85rem;margin:0.25rem 0 0">{{resumeHobbies}}</p>
-                </div>
-                <div *ngFor="let sec of customSections" style="margin-bottom:1rem">
-                  <div class="preview-section-title" *ngIf="sec.title">{{sec.title | uppercase}}</div>
-                  <p style="color:var(--slate-gray);font-size:0.85rem;margin:0.25rem 0 0;white-space:pre-line">
-                    {{sec.content}}</p>
-                </div>
                 <div *ngIf="!resumeFirstName&&!resumeLastName&&!resumeSkills&&!resumeExperiences[0]?.title"
-                  style="text-align:center;color:var(--slate-gray);padding:3rem 1rem">Fill in your details to see the
-                  live preview here.
+                  style="text-align:center;color:var(--slate-gray);padding:3rem 1rem">Fill in your details to see the live preview here.
+                </div>
+
+                <div *ngFor="let sectionKey of resumeSectionOrder">
+                  <ng-container [ngSwitch]="sectionKey">
+                    
+                    <div *ngSwitchCase="'personal'">
+                      <div *ngIf="resumeFirstName||resumeLastName" class="preview-personal">
+                        <h2>{{resumeFirstName}} {{resumeLastName}}</h2>
+                        <p class="preview-role">{{resumeRole}}</p>
+                        <p class="preview-email">{{resumeEmail}}</p>
+                      </div>
+                    </div>
+                    
+                    <div *ngSwitchCase="'experience'">
+                      <div *ngIf="resumeExperiences[0]?.title" class="preview-section">
+                        <div class="preview-section-title">EXPERIENCE</div>
+                        <div *ngFor="let exp of resumeExperiences" class="preview-item">
+                          <div class="preview-item-header"><strong>{{exp.title}}</strong><span>{{exp.date}}</span></div>
+                          <div class="preview-item-sub">{{exp.company}}</div>
+                          <p class="preview-item-desc">{{exp.description}}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div *ngSwitchCase="'education'">
+                      <div *ngIf="resumeEducations[0]?.degree" class="preview-section">
+                        <div class="preview-section-title">EDUCATION</div>
+                        <div *ngFor="let edu of resumeEducations" class="preview-item">
+                          <div class="preview-item-header"><strong>{{edu.degree}}</strong><span>{{edu.date}}</span></div>
+                          <div class="preview-item-sub">{{edu.institution}}</div>
+                          <p class="preview-item-desc">{{edu.description}}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div *ngSwitchCase="'skills'">
+                      <div *ngIf="resumeSkills" class="preview-section">
+                        <div class="preview-section-title">SKILLS</div>
+                        <div class="preview-skills-container">
+                          <span *ngFor="let s of resumeSkills.split(',')" class="preview-skill-chip">{{s.trim()}}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div *ngSwitchCase="'hobbies'">
+                      <div *ngIf="resumeHobbies" class="preview-section">
+                        <div class="preview-section-title">HOBBIES</div>
+                        <p class="preview-item-desc">{{resumeHobbies}}</p>
+                      </div>
+                    </div>
+
+                    <div *ngSwitchCase="'custom'">
+                      <div *ngFor="let sec of customSections" class="preview-section">
+                        <div class="preview-section-title" *ngIf="sec.title">{{sec.title | uppercase}}</div>
+                        <p class="preview-item-desc" style="white-space:pre-line">{{sec.content}}</p>
+                      </div>
+                    </div>
+
+                  </ng-container>
                 </div>
               </div>
             </div>
           </div>
         </div>
+        
         <!-- Career Roadmap -->
         <div *ngIf="activeAiFeature==='roadmap'" class="ai-builder-layout">
           <div class="ai-builder-left">
