@@ -285,12 +285,50 @@
                   <button class="btn-ghost-sm" (click)="addExperience()">+ Add Role</button>
                 </div>
 
+                
+                <div *ngSwitchCase="'projects'">
+                  <h3>Projects</h3>
+                  <div *ngFor="let proj of resumeProjects; let i=index" class="dynamic-entry-box drag-item"
+                    draggable="true" (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
+                    (drop)="onSectionDrop(resumeProjects, $event)" [class.drag-over]="dragoverIndex===i">
+                    <div class="drag-handle" title="Drag to reorder inner"><svg class="inline-icon" viewBox="0 0 24 24">
+                        <circle cx="9" cy="12" r="1" /><circle cx="9" cy="5" r="1" /><circle cx="9" cy="19" r="1" />
+                        <circle cx="15" cy="12" r="1" /><circle cx="15" cy="5" r="1" /><circle cx="15" cy="19" r="1" />
+                      </svg></div>
+                    <button class="close-btn" (click)="removeResumeProject(i)" title="Delete"
+                      style="position:absolute; top:8px; right:12px; font-size:1.6rem; color:#dc2626;"><svg
+                        class="inline-icon" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg></button>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem; width: 90%;">
+                      <input type="text" class="ai-input" placeholder="Project Title" [(ngModel)]="proj.title">
+                      <input type="text" class="ai-input" placeholder="Tech Stack" [(ngModel)]="proj.techStack">
+                    </div>
+                    <input type="text" class="ai-input w-full" placeholder="Project Link" [(ngModel)]="proj.link"
+                      style="margin-bottom:0.75rem">
+                    <textarea class="ai-input w-full" rows="2" placeholder="Description" [(ngModel)]="proj.description"></textarea>
+                  </div>
+                  <button class="btn-ghost-sm" (click)="addResumeProject()">+ Add Project</button>
+                </div>
+
                 <div *ngSwitchCase="'skills'">
                   <h3>Skills & Tools</h3>
                   <input type="text" class="ai-input w-full" placeholder="e.g. React, Figma, Python" [(ngModel)]="resumeSkills">
                 </div>
 
-                <div *ngSwitchCase="'education'">
+                
+                    <div *ngSwitchCase="'projects'">
+                      <div *ngIf="resumeProjects[0]?.title" class="preview-section">
+                        <div class="preview-section-title">PROJECTS</div>
+                        <div *ngFor="let proj of resumeProjects" class="preview-item">
+                          <div class="preview-item-header"><strong>{{proj.title}}</strong><span>{{proj.techStack}}</span></div>
+                          <div class="preview-item-sub">{{proj.link}}</div>
+                          <p class="preview-item-desc">{{proj.description}}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div *ngSwitchCase="'education'">
                   <h3>Education</h3>
                   <div *ngFor="let edu of resumeEducations; let i=index" class="dynamic-entry-box drag-item"
                     draggable="true" (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
@@ -363,10 +401,17 @@
 
           <div class="ai-builder-right">
             <div class="ai-builder-actions" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-              <div class="template-selector" style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+              <div class="template-selector" style="display:flex; gap:0.5rem; margin-bottom:0.5rem; align-items:center;">
                 <button class="btn-ghost-sm" [class.active-template]="selectedTemplate==='ats'" (click)="selectedTemplate='ats'" style="border:1px solid #ccc; background:#fff;">ATS</button>
                 <button class="btn-ghost-sm" [class.active-template]="selectedTemplate==='professional'" (click)="selectedTemplate='professional'" style="border:1px solid #ccc; background:#fff;">Professional</button>
                 <button class="btn-ghost-sm" [class.active-template]="selectedTemplate==='casual'" (click)="selectedTemplate='casual'" style="border:1px solid #ccc; background:#fff;">Casual</button>
+                
+                <select [(ngModel)]="resumeFontSize" class="ai-input" style="padding: 0.2rem 0.5rem; height: auto;">
+                  <option value="12px">12px</option>
+                  <option value="14px">14px</option>
+                  <option value="16px">16px</option>
+                </select>
+                <input type="color" [(ngModel)]="resumeThemeColor" style="height: 25px; width: 40px; border: none; background: transparent; cursor: pointer;" title="Theme Color">
               </div>
               <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
                 <button class="btn-ai-optimize" (click)="generateResume()" [disabled]="resumeLoading">{{resumeLoading?'Optimizing...':'AI Optimize Layout'}}</button>
@@ -374,7 +419,7 @@
               </div>
             </div>
 
-            <div class="preview-canvas" id="resume-preview" [ngClass]="'resume-template-' + selectedTemplate">
+            <div class="preview-canvas" id="resume-preview" [ngClass]="'resume-template-' + selectedTemplate" [style.fontSize]="resumeFontSize" [style.--resume-primary]="resumeThemeColor">
               <!-- AI RESULT: formatted structured view -->
               <div *ngIf="resumeResult" class="resume-preview-doc">
                 <div class="preview-section-title" style="color:var(--signal-orange);margin-bottom:1.25rem"><svg class="inline-icon" viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /><path d="M5 3v4" /><path d="M3 5h4" /><path d="M19 17v4" /><path d="M17 19h4" /></svg> AI OPTIMIZED RESUME</div>

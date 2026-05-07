@@ -101,8 +101,10 @@ export class StudentDashboardComponent implements OnInit, AfterViewChecked {
   resumeExperiences: any[] = [{ title: '', company: '', date: '', description: '' }];
   resumeEducations: any[] = [{ degree: '', institution: '', date: '', description: '' }];
   customSections: { title: string, content: string }[] = []; // NEW Custom Sections
-  resumeSectionOrder: string[] = ['personal', 'experience', 'education', 'skills', 'hobbies', 'custom'];
+  resumeSectionOrder: string[] = ['personal', 'experience', 'projects', 'education', 'skills', 'hobbies', 'custom'];
   selectedTemplate: 'ats' | 'professional' | 'casual' = 'ats';
+  resumeFontSize: string = '14px';
+  resumeThemeColor: string = '#cf4500';
   resumeProjects: any[] = [];
   resumeLoading = false;
   resumeResult = '';
@@ -540,7 +542,9 @@ studentSkills=${this.studentData?.skills || ''}
   }
 
   addExperience() { this.resumeExperiences.push({ title: '', company: '', date: '', description: '' }); }
+  addResumeProject() { this.resumeProjects.push({ title: '', techStack: '', link: '', description: '' }); }
   removeExperience(i: number) { this.resumeExperiences.splice(i, 1); }
+  removeResumeProject(i: number) { this.resumeProjects.splice(i, 1); }
 
   addEducation() { this.resumeEducations.push({ degree: '', institution: '', date: '', description: '' }); }
   removeEducation(i: number) { this.resumeEducations.splice(i, 1); }
@@ -843,15 +847,25 @@ studentSkills=${this.studentData?.skills || ''}
     
     try {
       if (this.studentData.experiences) {
-        this.resumeExperiences = JSON.parse(this.studentData.experiences);
-        if(!Array.isArray(this.resumeExperiences) || this.resumeExperiences.length === 0) {
+        const exps = JSON.parse(this.studentData.experiences);
+        this.resumeExperiences = exps.map((e: any) => ({
+          title: e.role || '',
+          company: e.company || '',
+          date: e.duration || '',
+          description: e.description || ''
+        }));
+        if(this.resumeExperiences.length === 0) {
           this.resumeExperiences = [{ title: '', company: '', date: '', description: '' }];
         }
       }
     } catch(e) {}
     try {
       if (this.studentData.projects) {
-        this.resumeProjects = JSON.parse(this.studentData.projects);
+        const projs = JSON.parse(this.studentData.projects);
+        this.resumeProjects = projs;
+        if(!Array.isArray(this.resumeProjects) || this.resumeProjects.length === 0) {
+          this.resumeProjects = [{ title: '', techStack: '', link: '', description: '' }];
+        }
       }
     } catch(e) {}
   }
