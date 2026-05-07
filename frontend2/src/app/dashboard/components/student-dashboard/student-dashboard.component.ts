@@ -1,5 +1,9 @@
 import { ToastService } from '../../../shared/services/toast.service';
 import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { Component, OnInit, AfterViewInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { StudentDashboardService } from '../../services/student-dashboard.service';
 import { forkJoin } from 'rxjs';
@@ -29,13 +33,15 @@ export class StudentDashboardComponent implements OnInit, AfterViewInit, AfterVi
 
   // Three.js State
   private threeRenderer: THREE.WebGLRenderer | null = null;
+  private threeCSSRenderer: CSS2DRenderer | null = null;
+  private threeComposer: EffectComposer | null = null;
   private threeScene: THREE.Scene | null = null;
   private threeCamera: THREE.PerspectiveCamera | null = null;
   private threeAnimFrameId: number | null = null;
-  private threeSkillMeshes: { mesh: THREE.Mesh, angle: number, radius: number, speed: number, label: HTMLElement | null }[] = [];
-  private threeProjectMeshes: { mesh: THREE.Mesh, angle: number, radius: number, speed: number, label: HTMLElement | null }[] = [];
-  private threeNebula: THREE.Points | null = null;
+  private threeOrbitalNodes: { mesh: THREE.Mesh, angle: number, radius: number, speed: number, floatOffset: number }[] = [];
+  private threeGalaxy: THREE.Points | null = null;
   private threeInitialized = false;
+  constellationSkillInput: string = '';
   studentId!: number;
   currentView: View = 'overview';
 
@@ -893,200 +899,342 @@ studentSkills=${this.studentData?.skills || ''}
 
 
   // ==========================================
-  // THREE.JS CONSTELLATION ENGINE
+  // THREE.JS CINEMATIC CONSTELLATION ENGINE
   // ==========================================
+
+  getProfileCompletion(): number {
+    if (!this.studentData) return 0;
+    const fields = ['name', 'email', 'phone', 'bio', 'branch', 'year', 'skills', 'projects', 'experiences'];
+    const filled = fields.filter(f => this.studentData[f] && String(this.studentData[f]).trim().length > 0).length;
+    return Math.round((filled / fields.length) * 100);
+  }
 
   initThreeJS(): void {
     const container = document.getElementById('three-canvas-container');
     if (!container || this.threeInitialized) return;
     this.threeInitialized = true;
-    const w = container.clientWidth || 800;
+
+    const w = container.clientWidth || window.innerWidth;
     const h = container.clientHeight || 600;
+
+    // --- SCENE ---
     this.threeScene = new THREE.Scene();
-    this.threeScene.background = new THREE.Color(0x02040a);
-    this.threeCamera = new THREE.PerspectiveCamera(55, w / h, 0.1, 2000);
-    this.threeCamera.position.set(0, 180, 260);
-    this.threeCamera.lookAt(0, 0, 0);
-    this.threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    this.threeRenderer.setPixelRatio(window.devicePixelRatio);
+    this.threeScene.fog = new THREE.FogExp2(0x02040a, 0.0015);
+
+    // --- CAMERA ---
+    this.threeCamera = new THREE.PerspectiveCamera(50, w / h, 0.1, 3000);
+    this.threeCamera.position.set(0, 140, 320);
+    this.threeCamera.lookAt(0, -10, 0);
+
+    // --- WEBGL RENDERER ---
+    this.threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+    this.threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.threeRenderer.setSize(w, h);
+    this.threeRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.threeRenderer.toneMappingExposure = 1.2;
     container.appendChild(this.threeRenderer.domElement);
-    const ambientLight = new THREE.AmbientLight(0x111133, 2);
-    this.threeScene.add(ambientLight);
-    const coreLight = new THREE.PointLight(0xff6600, 8, 200);
-    this.threeScene.add(coreLight);
-    const rimLight = new THREE.PointLight(0x00e5ff, 3, 300);
-    rimLight.position.set(-100, 80, -50);
-    this.threeScene.add(rimLight);
-    const purpleLight = new THREE.PointLight(0xb300ff, 2, 250);
-    purpleLight.position.set(100, -50, -80);
-    this.threeScene.add(purpleLight);
-    this.buildNebula();
-    this.buildCentralAvatar();
-    this.buildOrbitRings();
-    this.buildGridFloor();
-    this.buildSkillNodes();
-    this.buildProjectPlanets();
+
+    // --- CSS2D RENDERER (for crisp HTML labels) ---
+    this.threeCSSRenderer = new CSS2DRenderer();
+    this.threeCSSRenderer.setSize(w, h);
+    this.threeCSSRenderer.domElement.style.position = 'absolute';
+    this.threeCSSRenderer.domElement.style.top = '0';
+    this.threeCSSRenderer.domElement.style.pointerEvents = 'none';
+    container.appendChild(this.threeCSSRenderer.domElement);
+
+    // --- BLOOM POST-PROCESSING ---
+    const renderPass = new RenderPass(this.threeScene, this.threeCamera);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(w, h), 1.4, 0.4, 0.15);
+    this.threeComposer = new EffectComposer(this.threeRenderer);
+    this.threeComposer.addPass(renderPass);
+    this.threeComposer.addPass(bloomPass);
+
+    // --- LIGHTING ---
+    this.threeScene.add(new THREE.AmbientLight(0x080820, 3));
+    const coreGlow = new THREE.PointLight(0xff6600, 15, 180);
+    this.threeScene.add(coreGlow);
+    const cyanFill = new THREE.PointLight(0x00e5ff, 6, 350);
+    cyanFill.position.set(-120, 60, -80);
+    this.threeScene.add(cyanFill);
+    const purpleFill = new THREE.PointLight(0xb300ff, 4, 300);
+    purpleFill.position.set(120, -40, -100);
+    this.threeScene.add(purpleFill);
+
+    // --- BUILD SCENE OBJECTS ---
+    this.buildSpiralGalaxy();
+    this.buildCinematicCore();
+    this.buildOrbitTracks();
+    this.buildHolographicGrid();
+    this.buildAllDataNodes();
+
+    // Start loop
     this.animateThreeJS();
   }
 
-  private buildNebula(): void {
-    const geo = new THREE.BufferGeometry();
-    const count = 6000;
+  private buildSpiralGalaxy(): void {
+    const count = 12000;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
-    const cyan = new THREE.Color(0x00e5ff);
-    const purple = new THREE.Color(0xb300ff);
-    const white = new THREE.Color(0xffffff);
+    const arms = 3;
+    const spread = 0.45;
+    const cInner = new THREE.Color(0xffffff);
+    const cMid   = new THREE.Color(0x00e5ff);
+    const cOuter = new THREE.Color(0x4400aa);
+
     for (let i = 0; i < count; i++) {
-      const r = 300 + Math.random() * 500;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.35;
-      positions[i * 3 + 2] = r * Math.cos(phi);
-      const mix = Math.random();
-      const c = mix < 0.4 ? cyan : mix < 0.7 ? purple : white;
+      const armIdx = i % arms;
+      const t = Math.random();
+      const r = 180 + t * 600;
+      const spinAngle = t * Math.PI * 5;
+      const armAngle = (armIdx / arms) * Math.PI * 2;
+      const angle = armAngle + spinAngle;
+      const randomX = (Math.random() - 0.5) * r * spread * (1 - t * 0.6);
+      const randomZ = (Math.random() - 0.5) * r * spread * (1 - t * 0.6);
+      const randomY = (Math.random() - 0.5) * 30;
+      positions[i * 3]     = Math.cos(angle) * r + randomX;
+      positions[i * 3 + 1] = randomY;
+      positions[i * 3 + 2] = Math.sin(angle) * r + randomZ;
+      const c = t < 0.3 ? cInner.clone().lerp(cMid, t / 0.3)
+              : t < 0.7 ? cMid.clone().lerp(cOuter, (t - 0.3) / 0.4)
+              : cOuter;
       colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
     }
+    const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    const mat = new THREE.PointsMaterial({ size: 1.6, vertexColors: true, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.75 });
-    this.threeNebula = new THREE.Points(geo, mat);
-    this.threeScene!.add(this.threeNebula);
-  }
+    geo.setAttribute('color',    new THREE.BufferAttribute(colors, 3));
+    const mat = new THREE.PointsMaterial({ size: 1.5, vertexColors: true, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.85 });
+    this.threeGalaxy = new THREE.Points(geo, mat);
+    this.threeScene!.add(this.threeGalaxy);
 
-  private buildCentralAvatar(): void {
-    const icoGeo = new THREE.IcosahedronGeometry(18, 1);
-    const wireGeo = new THREE.WireframeGeometry(icoGeo);
-    const wireMat = new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.4 });
-    this.threeScene!.add(new THREE.LineSegments(wireGeo, wireMat));
-    const sphereGeo = new THREE.SphereGeometry(22, 32, 32);
-    const sphereMat = new THREE.MeshPhongMaterial({ color: 0xff6600, emissive: 0xff3300, emissiveIntensity: 0.6, transparent: true, opacity: 0.15 });
-    this.threeScene!.add(new THREE.Mesh(sphereGeo, sphereMat));
-    const coreDot = new THREE.Mesh(new THREE.SphereGeometry(5, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffa500 }));
-    this.threeScene!.add(coreDot);
-  }
-
-  private buildOrbitRings(): void {
-    const radii = [55, 95, 140];
-    const colors = [0x00e5ff, 0xb300ff, 0x00ff99];
-    for (let ri = 0; ri < radii.length; ri++) {
-      const ring = new THREE.Mesh(new THREE.RingGeometry(radii[ri] - 0.4, radii[ri] + 0.4, 128), new THREE.MeshBasicMaterial({ color: colors[ri], side: THREE.DoubleSide, transparent: true, opacity: 0.15 }));
-      ring.rotation.x = -Math.PI / 2;
-      this.threeScene!.add(ring);
+    // Dense core glow cloud
+    const coreCount = 800;
+    const corePos = new Float32Array(coreCount * 3);
+    const coreCols = new Float32Array(coreCount * 3);
+    for (let i = 0; i < coreCount; i++) {
+      const r = Math.random() * 40;
+      const th = Math.random() * Math.PI * 2;
+      const ph = Math.acos(2 * Math.random() - 1);
+      corePos[i*3]   = r * Math.sin(ph) * Math.cos(th);
+      corePos[i*3+1] = r * Math.sin(ph) * Math.sin(th) * 0.4;
+      corePos[i*3+2] = r * Math.cos(ph);
+      const cc = new THREE.Color().setHSL(0.08 + Math.random() * 0.06, 1, 0.7);
+      coreCols[i*3] = cc.r; coreCols[i*3+1] = cc.g; coreCols[i*3+2] = cc.b;
     }
+    const coreGeo = new THREE.BufferGeometry();
+    coreGeo.setAttribute('position', new THREE.BufferAttribute(corePos, 3));
+    coreGeo.setAttribute('color', new THREE.BufferAttribute(coreCols, 3));
+    const coreMat = new THREE.PointsMaterial({ size: 2.5, vertexColors: true, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.9 });
+    this.threeScene!.add(new THREE.Points(coreGeo, coreMat));
   }
 
-  private buildGridFloor(): void {
-    const gridHelper = new THREE.GridHelper(600, 30, 0x00e5ff, 0x001133);
-    gridHelper.position.y = -40;
-    (gridHelper.material as THREE.Material).opacity = 0.2;
-    (gridHelper.material as THREE.Material).transparent = true;
-    this.threeScene!.add(gridHelper);
+  private buildCinematicCore(): void {
+    // TODO: Load GLTF wireframe face here later (e.g. using GLTFLoader)
+
+    // Outer translucent shell
+    const shellMat = new THREE.MeshPhongMaterial({ color: 0xff6600, emissive: 0xff4400, emissiveIntensity: 0.8, transparent: true, opacity: 0.08, side: THREE.FrontSide });
+    this.threeScene!.add(new THREE.Mesh(new THREE.SphereGeometry(28, 32, 32), shellMat));
+
+    // Wireframe icosahedrons (layered)
+    [20, 25, 30].forEach((r, idx) => {
+      const geo = new THREE.IcosahedronGeometry(r, idx === 2 ? 1 : 0);
+      const wire = new THREE.LineSegments(new THREE.WireframeGeometry(geo),
+        new THREE.LineBasicMaterial({ color: idx === 0 ? 0x00e5ff : idx === 1 ? 0xffa500 : 0xb300ff, transparent: true, opacity: 0.3 - idx * 0.06 }));
+      wire.rotation.x = idx * 0.5;
+      wire.rotation.y = idx * 0.3;
+      wire.userData['rotSpeed'] = [0.003, -0.002, 0.0015][idx];
+      this.threeScene!.add(wire);
+    });
+
+    // Dense pulsing particle halo around core
+    const haloCount = 600;
+    const haloPos = new Float32Array(haloCount * 3);
+    const haloCols = new Float32Array(haloCount * 3);
+    for (let i = 0; i < haloCount; i++) {
+      const r = 32 + Math.random() * 18;
+      const th = Math.random() * Math.PI * 2;
+      const ph = Math.acos(2 * Math.random() - 1);
+      haloPos[i*3]   = r * Math.sin(ph) * Math.cos(th);
+      haloPos[i*3+1] = r * Math.sin(ph) * Math.sin(th);
+      haloPos[i*3+2] = r * Math.cos(ph);
+      const hc = new THREE.Color().setHSL(0.55 + Math.random() * 0.15, 1, 0.8);
+      haloCols[i*3] = hc.r; haloCols[i*3+1] = hc.g; haloCols[i*3+2] = hc.b;
+    }
+    const haloGeo = new THREE.BufferGeometry();
+    haloGeo.setAttribute('position', new THREE.BufferAttribute(haloPos, 3));
+    haloGeo.setAttribute('color', new THREE.BufferAttribute(haloCols, 3));
+    const haloPts = new THREE.Points(haloGeo, new THREE.PointsMaterial({ size: 1.8, vertexColors: true, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.7 }));
+    haloPts.userData['isHalo'] = true;
+    this.threeScene!.add(haloPts);
+
+    // Core solid hot dot
+    const hotMat = new THREE.MeshBasicMaterial({ color: 0xffddaa });
+    this.threeScene!.add(new THREE.Mesh(new THREE.SphereGeometry(4, 16, 16), hotMat));
   }
 
-  private buildSkillNodes(): void {
-    const skills = this.newSkills.length > 0 ? this.newSkills : (this.studentData?.skills || '').split(',').map((s: string) => s.trim()).filter((s: string) => s);
-    const labelsContainer = document.getElementById('three-labels');
-    const radius = 55;
-    const palette = [0x00e5ff, 0xffd700, 0xff6600, 0xb300ff, 0x00ff99, 0xff0066];
-    skills.forEach((skill: string, i: number) => {
-      const angle = (i / skills.length) * Math.PI * 2;
-      const geo = new THREE.OctahedronGeometry(4 + Math.random() * 3, 0);
-      const mat = new THREE.MeshPhongMaterial({ color: palette[i % palette.length], emissive: palette[i % palette.length], emissiveIntensity: 0.5, transparent: true, opacity: 0.9 });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(Math.cos(angle) * radius, 5, Math.sin(angle) * radius);
-      this.threeScene!.add(mesh);
-      let label: HTMLElement | null = null;
-      if (labelsContainer) {
-        label = document.createElement('div');
-        label.textContent = skill;
-        label.style.cssText = 'position:absolute;color:#a5d8ff;font-size:10px;font-weight:700;font-family:monospace;background:rgba(0,5,20,0.7);border:1px solid rgba(165,216,255,0.3);border-radius:10px;padding:2px 7px;pointer-events:none;white-space:nowrap;letter-spacing:0.5px;';
-        labelsContainer.appendChild(label);
-      }
-      this.threeSkillMeshes.push({ mesh, angle, radius, speed: 0.004 + i * 0.0005, label });
+  private buildOrbitTracks(): void {
+    const tracks = [
+      { r: 60,  color: 0x00e5ff, opacity: 0.25 },
+      { r: 100, color: 0xb300ff, opacity: 0.20 },
+      { r: 145, color: 0xffd700, opacity: 0.18 },
+    ];
+    tracks.forEach(t => {
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(t.r - 0.5, t.r + 0.5, 180),
+        new THREE.MeshBasicMaterial({ color: t.color, side: THREE.DoubleSide, transparent: true, opacity: t.opacity })
+      );
+      ring.rotation.x = -Math.PI / 2.2;
+      this.threeScene!.add(ring);
     });
   }
 
-  private buildProjectPlanets(): void {
+  private buildHolographicGrid(): void {
+    const grid = new THREE.GridHelper(800, 40, 0x001a4d, 0x001020);
+    grid.position.y = -55;
+    (grid.material as THREE.Material).transparent = true;
+    (grid.material as THREE.Material).opacity = 0.3;
+    this.threeScene!.add(grid);
+  }
+
+  private makeCSSLabel(text: string, cssClass: string, color: string, subtext?: string): CSS2DObject {
+    const div = document.createElement('div');
+    div.style.cssText =
+      'background:rgba(2,4,20,0.75);backdrop-filter:blur(10px);border:1px solid ' + color +
+      ';border-radius:12px;padding:5px 12px;color:' + color +
+      ';font-family:monospace;font-size:10px;font-weight:700;white-space:nowrap;pointer-events:none;letter-spacing:0.5px;box-shadow:0 0 12px ' + color + '40;';
+    div.textContent = text;
+    if (subtext) {
+      const sub = document.createElement('div');
+      sub.style.cssText = 'color:rgba(255,255,255,0.5);font-size:9px;font-weight:400;margin-top:2px;';
+      sub.textContent = subtext;
+      div.appendChild(sub);
+    }
+    return new CSS2DObject(div);
+  }
+
+  private buildAllDataNodes(): void {
+    const skills = this.newSkills.length > 0
+      ? this.newSkills
+      : (this.studentData?.skills || '').split(',').map((s: string) => s.trim()).filter((s: string) => s);
+
     const projects = Array.isArray(this.editProjects) ? this.editProjects : [];
-    const labelsContainer = document.getElementById('three-labels');
-    const radius = 95;
-    const palette = [0xff6600, 0x8b5cf6, 0x10b981, 0xf59e0b];
+
+    let expArr: any[] = [];
+    try { expArr = this.editExperiences && this.editExperiences.length ? this.editExperiences : (this.studentData?.experiences ? JSON.parse(this.studentData.experiences) : []); } catch(e) {}
+
+    const skillColors   = [0x00e5ff, 0x00ff99, 0x40bfff, 0x80ffcc, 0x00cfff, 0x44ffbb];
+    const projectColors = [0xff6600, 0x8b5cf6, 0x10b981, 0xf59e0b, 0xef4444];
+    const expColors     = [0xffd700, 0xffaa00, 0xff8c00, 0xffcc33];
+
+    // --- SKILLS: Inner orbit r=60 ---
+    skills.forEach((skill: string, i: number) => {
+      const angle = (i / Math.max(skills.length, 1)) * Math.PI * 2;
+      const col = skillColors[i % skillColors.length];
+      const mat = new THREE.MeshPhongMaterial({ color: col, emissive: col, emissiveIntensity: 0.6, transparent: true, opacity: 0.95 });
+      const mesh = new THREE.Mesh(new THREE.OctahedronGeometry(5, 0), mat);
+      mesh.position.set(Math.cos(angle) * 60, 0, Math.sin(angle) * 60);
+      const label = this.makeCSSLabel(skill, 'skill-label', '#' + col.toString(16).padStart(6, '0'));
+      mesh.add(label);
+      this.threeScene!.add(mesh);
+      this.threeOrbitalNodes.push({ mesh, angle, radius: 60, speed: 0.005 + i * 0.0003, floatOffset: i * 0.7 });
+    });
+
+    // --- PROJECTS: Middle orbit r=100 ---
     projects.forEach((proj: any, i: number) => {
       const angle = (i / Math.max(projects.length, 1)) * Math.PI * 2;
-      const size = 8 + Math.random() * 5;
-      const mat = new THREE.MeshPhongMaterial({ color: palette[i % palette.length], emissive: palette[i % palette.length], emissiveIntensity: 0.3, shininess: 80 });
+      const col = projectColors[i % projectColors.length];
+      const size = 9 + Math.random() * 4;
+      const mat = new THREE.MeshPhongMaterial({ color: col, emissive: col, emissiveIntensity: 0.4, shininess: 60 });
       const mesh = new THREE.Mesh(new THREE.SphereGeometry(size, 20, 20), mat);
-      mesh.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
-      const ring = new THREE.Mesh(new THREE.TorusGeometry(size * 1.5, 0.8, 6, 40), new THREE.MeshBasicMaterial({ color: palette[i % palette.length], transparent: true, opacity: 0.4 }));
-      ring.rotation.x = Math.PI / 3;
-      mesh.add(ring);
+      mesh.position.set(Math.cos(angle) * 100, 0, Math.sin(angle) * 100);
+      // Planet ring
+      const ringMesh = new THREE.Mesh(
+        new THREE.TorusGeometry(size * 1.6, 0.7, 6, 40),
+        new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.35 })
+      );
+      ringMesh.rotation.x = Math.PI / 3;
+      mesh.add(ringMesh);
+      // Clickable
+      mesh.userData['proj'] = proj;
+      mesh.userData['clickable'] = true;
+      const label = this.makeCSSLabel(proj.title || 'Project', 'proj-label', '#ff9944', proj.techStack);
+      mesh.add(label);
       this.threeScene!.add(mesh);
-      let label: HTMLElement | null = null;
-      if (labelsContainer) {
-        label = document.createElement('div');
-        label.textContent = proj.title || 'Project';
-        label.style.cssText = 'position:absolute;color:#ffd700;font-size:11px;font-weight:700;font-family:Inter,sans-serif;background:rgba(0,5,20,0.8);border:1px solid rgba(255,215,0,0.3);border-radius:10px;padding:3px 9px;pointer-events:none;white-space:nowrap;';
-        labelsContainer.appendChild(label);
-      }
-      this.threeProjectMeshes.push({ mesh, angle, radius, speed: 0.002 + i * 0.0003, label });
+      this.threeOrbitalNodes.push({ mesh, angle, radius: 100, speed: 0.0025 + i * 0.0004, floatOffset: i * 1.2 + 10 });
+    });
+
+    // --- EXPERIENCES: Outer orbit r=145 (Tetrahedrons, golden) ---
+    expArr.forEach((exp: any, i: number) => {
+      const angle = (i / Math.max(expArr.length, 1)) * Math.PI * 2;
+      const col = expColors[i % expColors.length];
+      const mat = new THREE.MeshPhongMaterial({ color: col, emissive: col, emissiveIntensity: 0.5, transparent: true, opacity: 0.95 });
+      const mesh = new THREE.Mesh(new THREE.TetrahedronGeometry(10, 0), mat);
+      mesh.position.set(Math.cos(angle) * 145, 0, Math.sin(angle) * 145);
+      mesh.userData['proj'] = exp;
+      mesh.userData['clickable'] = true;
+      const label = this.makeCSSLabel(exp.role || exp.company || 'Experience', 'exp-label', '#' + col.toString(16).padStart(6, '0'), exp.company || exp.duration);
+      mesh.add(label);
+      this.threeScene!.add(mesh);
+      this.threeOrbitalNodes.push({ mesh, angle, radius: 145, speed: 0.0015 + i * 0.0003, floatOffset: i * 1.5 + 5 });
     });
   }
 
   private animateThreeJS(): void {
     this.threeAnimFrameId = requestAnimationFrame(() => this.animateThreeJS());
     const t = Date.now() * 0.001;
-    if (this.threeNebula) this.threeNebula.rotation.y = t * 0.02;
-    this.threeSkillMeshes.forEach(item => {
-      item.angle += item.speed;
-      item.mesh.position.x = Math.cos(item.angle) * item.radius;
-      item.mesh.position.z = Math.sin(item.angle) * item.radius;
-      item.mesh.position.y = 5 + Math.sin(t * 1.2 + item.angle) * 8;
-      item.mesh.rotation.y += 0.02;
-      this.updateLabel(item.label, item.mesh.position);
-    });
-    this.threeProjectMeshes.forEach(item => {
-      item.angle += item.speed;
-      item.mesh.position.x = Math.cos(item.angle) * item.radius;
-      item.mesh.position.z = Math.sin(item.angle) * item.radius;
-      item.mesh.position.y = Math.sin(t * 0.8 + item.angle) * 12;
-      item.mesh.rotation.y += 0.01;
-      this.updateLabel(item.label, item.mesh.position);
-    });
-    if (this.threeRenderer && this.threeScene && this.threeCamera) {
-      this.threeRenderer.render(this.threeScene, this.threeCamera);
-    }
-  }
 
-  private updateLabel(label: HTMLElement | null, position: THREE.Vector3): void {
-    if (!label || !this.threeCamera || !this.threeRenderer) return;
-    const vec = position.clone().project(this.threeCamera);
-    const canvas = this.threeRenderer.domElement;
-    const x = (vec.x * 0.5 + 0.5) * canvas.clientWidth;
-    const y = (-vec.y * 0.5 + 0.5) * canvas.clientHeight;
-    if (vec.z > 1) { label.style.display = 'none'; return; }
-    label.style.display = 'block';
-    label.style.left = (x - label.offsetWidth / 2) + 'px';
-    label.style.top = (y + 12) + 'px';
+    // Rotate galaxy
+    if (this.threeGalaxy) this.threeGalaxy.rotation.y = t * 0.015;
+
+    // Pulse wireframe icosahedrons
+    this.threeScene!.children.forEach((obj: any) => {
+      if (obj instanceof THREE.LineSegments && obj.userData['rotSpeed']) {
+        obj.rotation.y += obj.userData['rotSpeed'];
+        obj.rotation.x += obj.userData['rotSpeed'] * 0.5;
+      }
+      if (obj instanceof THREE.Points && obj.userData['isHalo']) {
+        obj.rotation.y = t * 0.03;
+        const scale = 1 + Math.sin(t * 2) * 0.04;
+        obj.scale.set(scale, scale, scale);
+      }
+    });
+
+    // Orbit all nodes
+    this.threeOrbitalNodes.forEach(node => {
+      node.angle += node.speed;
+      node.mesh.position.x = Math.cos(node.angle) * node.radius;
+      node.mesh.position.z = Math.sin(node.angle) * node.radius;
+      node.mesh.position.y = Math.sin(t * 0.9 + node.floatOffset) * 14;
+      node.mesh.rotation.y += 0.015;
+      node.mesh.rotation.x += 0.008;
+    });
+
+    // Slow camera drift for parallax feel
+    if (this.threeCamera) {
+      this.threeCamera.position.x = Math.sin(t * 0.08) * 20;
+      this.threeCamera.lookAt(0, -10, 0);
+    }
+
+    if (this.threeComposer) this.threeComposer.render();
+    if (this.threeCSSRenderer && this.threeScene && this.threeCamera) {
+      this.threeCSSRenderer.render(this.threeScene, this.threeCamera);
+    }
   }
 
   destroyThreeJS(): void {
     if (this.threeAnimFrameId !== null) { cancelAnimationFrame(this.threeAnimFrameId); this.threeAnimFrameId = null; }
+    if (this.threeComposer) { this.threeComposer.dispose(); this.threeComposer = null; }
     if (this.threeRenderer) {
       this.threeRenderer.dispose();
       const c = document.getElementById('three-canvas-container');
-      if (c && this.threeRenderer.domElement.parentNode === c) c.removeChild(this.threeRenderer.domElement);
+      if (c) { while (c.firstChild) c.removeChild(c.firstChild); }
       this.threeRenderer = null;
     }
-    const lc = document.getElementById('three-labels');
-    if (lc) lc.innerHTML = '';
-    this.threeScene = null; this.threeCamera = null; this.threeNebula = null;
-    this.threeSkillMeshes = []; this.threeProjectMeshes = []; this.threeInitialized = false;
+    this.threeCSSRenderer = null;
+    this.threeScene = null; this.threeCamera = null; this.threeGalaxy = null;
+    this.threeOrbitalNodes = []; this.threeInitialized = false;
   }
 
-  logout(): void {
+    logout(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('userRole');
     this.router.navigate(['/auth/login']);

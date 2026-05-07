@@ -1078,48 +1078,79 @@
       </div>
     </div>
 
-    <!-- TAB: CONSTELLATION VISUALIZER (Three.js WebGL) -->
-    <div *ngIf="currentView==='constellation'" class="constellation-wrapper" style="position:relative; background:#02040a; border-radius:16px; overflow:hidden; height:82vh;">
-      <!-- WebGL Canvas Container -->
-      <div id="three-canvas-container" style="width:100%; height:100%;"></div>
+    <!-- TAB: CONSTELLATION VISUALIZER (Three.js WebGL Cinematic) -->
+    <div *ngIf="currentView==='constellation'" style="position:relative; background:#02040a; border-radius:16px; overflow:hidden; height:82vh;">
+      <!-- WebGL Canvas + CSS2D Labels mount point -->
+      <div id="three-canvas-container" style="width:100%; height:100%; position:relative;"></div>
 
-      <!-- HTML Overlay -->
-      <div style="position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:10;">
-        <!-- Back Button -->
-        <button class="btn-ghost" (click)="switchView('edit-profile')"
-          style="position:absolute;top:16px;left:16px;pointer-events:all;color:#a5d8ff;border:1px solid rgba(165,216,255,0.3);background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);">← Back to Form</button>
+      <!-- ─── HTML OVERLAY LAYER ─── -->
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:20;">
 
-        <!-- Title -->
-        <div style="position:absolute;top:16px;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none;">
-          <h2 style="color:#fff;margin:0;font-size:1.2rem;font-weight:700;letter-spacing:2px;text-shadow:0 0 20px rgba(165,216,255,0.5);">PERSONA CONSTELLATION</h2>
-          <p style="color:#a5d8ff;margin:0;font-size:0.75rem;opacity:0.7;">{{studentData?.name}} · {{studentData?.branch}}</p>
+        <!-- TOP BAR -->
+        <div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:linear-gradient(to bottom,rgba(2,4,10,0.85),transparent);pointer-events:all;">
+          <button class="btn-ghost" (click)="switchView('edit-profile')"
+            style="color:#a5d8ff;border:1px solid rgba(165,216,255,0.25);background:rgba(0,0,0,0.5);backdrop-filter:blur(10px);font-size:0.85rem;padding:6px 14px;border-radius:20px;">← Edit Profile</button>
+
+          <div style="text-align:center;">
+            <div style="color:#fff;font-size:1rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;text-shadow:0 0 20px rgba(165,216,255,0.6);">Profile Constellation</div>
+            <div style="color:#a5d8ff;font-size:0.72rem;opacity:0.7;letter-spacing:1px;">{{studentData?.name}} · {{studentData?.branch}} · Year {{studentData?.year}}</div>
+          </div>
+
+          <!-- Profile Completion -->
+          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);border:1px solid rgba(165,216,255,0.15);border-radius:20px;padding:6px 16px;">
+            <div style="position:relative;width:36px;height:36px;">
+              <svg viewBox="0 0 36 36" style="width:36px;height:36px;transform:rotate(-90deg)">
+                <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3"/>
+                <circle cx="18" cy="18" r="15" fill="none" stroke="#00e5ff" stroke-width="3" [attr.stroke-dasharray]="getProfileCompletion() + ' 100'" stroke-linecap="round"/>
+              </svg>
+              <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.6rem;font-weight:700;">{{getProfileCompletion()}}%</span>
+            </div>
+            <span style="color:#a5d8ff;font-size:0.75rem;font-weight:600;">Profile<br>Completion</span>
+          </div>
         </div>
 
-        <!-- Skill Labels - rendered by Three.js into threeLabels container -->
-        <div id="three-labels" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></div>
+        <!-- RIGHT PANEL: Professional Summary -->
+        <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);width:220px;pointer-events:none;">
+          <div style="background:rgba(255,215,0,0.03);backdrop-filter:blur(12px);border:1px solid rgba(255,215,0,0.15);border-radius:16px;padding:16px;text-align:right;">
+            <div style="color:rgba(255,215,0,0.6);font-size:0.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">e.g., AI Enthusiast &nbsp;&nbsp; Code Sorcerer</div>
+            <div style="color:#fff;font-size:0.95rem;font-weight:300;line-height:1.6;font-style:italic;opacity:0.85;">{{studentData?.bio || 'A brief professional summary...'}}</div>
+            <div style="margin-top:12px;color:rgba(255,215,0,0.5);font-size:0.7rem;font-weight:600;">Code Sorcerer</div>
+          </div>
+          <a *ngIf="editGithub" [href]="editGithub" target="_blank"
+            style="pointer-events:all;display:block;margin-top:12px;background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px 12px;color:#a5d8ff;font-size:0.75rem;text-decoration:none;text-align:center;">
+            ⊕ github.com/{{editGithub | slice:editGithub.lastIndexOf('/')+1 : 999}}
+          </a>
+          <a *ngIf="editLinkedin" [href]="editLinkedin" target="_blank"
+            style="pointer-events:all;display:block;margin-top:8px;background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px 12px;color:#a5d8ff;font-size:0.75rem;text-decoration:none;text-align:center;">
+            ⊕ LinkedIn Profile
+          </a>
+        </div>
+
+        <!-- BOTTOM: Skill Portal + Lock-in Button -->
+        <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:10px;width:380px;pointer-events:all;">
+          <div style="background:rgba(2,4,10,0.7);backdrop-filter:blur(16px);border:1px solid rgba(0,229,255,0.2);border-radius:30px;padding:10px 20px;width:100%;display:flex;align-items:center;gap:10px;box-shadow:0 0 30px rgba(0,229,255,0.08);">
+            <span style="color:#00e5ff;font-size:1rem;">⊕</span>
+            <span style="color:#a5d8ff;font-size:0.85rem;letter-spacing:1px;">Skill Portal</span>
+            <span style="color:rgba(165,216,255,0.4);font-size:0.8rem;">Type a skill... (e.g. React, Python, Docker...)</span>
+          </div>
+          <button (click)="switchView('edit-profile')"
+            style="background:linear-gradient(135deg,rgba(0,229,255,0.15),rgba(179,0,255,0.15));backdrop-filter:blur(12px);border:1px solid rgba(0,229,255,0.3);border-radius:30px;padding:12px 40px;color:#fff;font-size:0.9rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;box-shadow:0 0 25px rgba(0,229,255,0.2),inset 0 0 20px rgba(0,229,255,0.05);transition:all 0.3s;">
+            Lock-in your Persona
+          </button>
+          <!-- Social chips -->
+          <div style="display:flex;gap:10px;">
+            <div *ngIf="studentData?.email" style="background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);border:1px solid rgba(165,216,255,0.15);border-radius:16px;padding:5px 12px;color:#a5d8ff;font-size:0.7rem;font-family:monospace;">✉ {{studentData?.email}}</div>
+          </div>
+        </div>
 
         <!-- Project Modal -->
-        <div *ngIf="activeProject" class="c-project-modal" style="pointer-events:all;" (click)="$event.stopPropagation()">
-          <button class="c-close-btn" (click)="activeProject = null"><svg class="inline-icon" viewBox="0 0 24 24">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></button>
-          <h3 style="margin:0 0 0.5rem;color:#CF4500;">{{activeProject.title}}</h3>
-          <p style="color:#a5d8ff;font-size:0.8rem;margin:0 0 1rem;font-family:monospace;">{{activeProject.techStack}}</p>
-          <p style="font-size:0.9rem;line-height:1.5;color:#ddd;">{{activeProject.description}}</p>
+        <div *ngIf="activeProject" class="c-project-modal" style="pointer-events:all;z-index:100;" (click)="$event.stopPropagation()">
+          <button class="c-close-btn" (click)="activeProject = null"><svg class="inline-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          <h3 style="margin:0 0 0.5rem;color:#00e5ff;">{{activeProject.title || activeProject.role}}</h3>
+          <p style="color:#a5d8ff;font-size:0.8rem;margin:0 0 0.5rem;font-family:monospace;">{{activeProject.techStack || activeProject.company}}</p>
+          <p style="font-size:0.9rem;line-height:1.5;color:#ddd;margin:0 0 1rem;">{{activeProject.description || activeProject.duration}}</p>
           <a *ngIf="activeProject.link" [href]="activeProject.link" target="_blank"
-            style="display:inline-block;margin-top:1rem;color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.4);">Launch Project ↗</a>
-        </div>
-
-        <!-- Bottom Info Strip -->
-        <div style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:1.5rem;pointer-events:none;">
-          <div *ngIf="studentData?.email" style="background:rgba(255,255,255,0.05);backdrop-filter:blur(8px);border:1px solid rgba(165,216,255,0.2);border-radius:20px;padding:6px 16px;color:#a5d8ff;font-size:0.75rem;font-family:monospace;">
-            ✉ {{studentData?.email}}
-          </div>
-          <a *ngIf="editGithub" [href]="editGithub" target="_blank" style="pointer-events:all;background:rgba(255,255,255,0.05);backdrop-filter:blur(8px);border:1px solid rgba(165,216,255,0.2);border-radius:20px;padding:6px 16px;color:#a5d8ff;font-size:0.75rem;text-decoration:none;">
-            ⊕ GitHub
-          </a>
-          <a *ngIf="editLinkedin" [href]="editLinkedin" target="_blank" style="pointer-events:all;background:rgba(255,255,255,0.05);backdrop-filter:blur(8px);border:1px solid rgba(165,216,255,0.2);border-radius:20px;padding:6px 16px;color:#a5d8ff;font-size:0.75rem;text-decoration:none;">
-            ⊕ LinkedIn
-          </a>
+            style="display:inline-block;color:#00e5ff;text-decoration:none;border-bottom:1px solid rgba(0,229,255,0.4);">Launch ↗</a>
         </div>
       </div>
     </div>
