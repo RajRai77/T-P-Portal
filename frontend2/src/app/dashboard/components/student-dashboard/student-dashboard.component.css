@@ -86,14 +86,14 @@ body {
 }
 
 .content-wrapper {
-  padding: 2.5rem;
+  padding: 1rem 2rem 2rem;
   background: transparent;
 }
 
 /* Tab divs that are direct children of main-content (outside content-wrapper) */
 .main-content > div[class=""],
 .main-content > div:not(.content-wrapper) {
-  padding: 2.5rem;
+  padding: 1rem 2rem 2rem;
 }
 
 .sidebar {
@@ -948,6 +948,7 @@ pre.ai-formatted-doc {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 0.75rem; /* WHITESPACE FIX */
 }
 
 .section-header h1 {
@@ -1604,7 +1605,10 @@ html.dark-theme .toast {
   position: relative;
   width: 100%;
   height: 85vh;
-  background: #0b0f19 radial-gradient(circle at center, #1a233a 0%, #0b0f19 100%);
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(59, 7, 100, 0.5) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(15, 118, 110, 0.35) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(26, 35, 58, 0.9) 0%, #070b19 80%);
   border-radius: var(--radius-card);
   overflow: hidden;
   color: #fff;
@@ -1619,13 +1623,20 @@ html.dark-theme .toast {
   right: 0;
   bottom: 0;
   background-image:
-    radial-gradient(2px 2px at 20px 30px, #ffffff, rgba(0, 0, 0, 0)),
-    radial-gradient(2px 2px at 40px 70px, #ffffff, rgba(0, 0, 0, 0)),
-    radial-gradient(1px 1px at 90px 40px, #ffffff, rgba(0, 0, 0, 0));
+    radial-gradient(1px 1px at 15px 25px, #fff, transparent),
+    radial-gradient(1px 1px at 85px 15px, #fff, transparent),
+    radial-gradient(1px 1px at 45px 65px, #a5d8ff, transparent),
+    radial-gradient(2px 2px at 120px 40px, #fff, transparent),
+    radial-gradient(1px 1px at 160px 80px, #a5d8ff, transparent),
+    radial-gradient(1px 1px at 30px 130px, #fff, transparent),
+    radial-gradient(2px 2px at 75px 110px, #e0f7ff, transparent),
+    radial-gradient(1px 1px at 190px 20px, #fff, transparent),
+    radial-gradient(1px 1px at 10px 180px, #a5d8ff, transparent),
+    radial-gradient(2px 2px at 140px 170px, #fff, transparent);
   background-repeat: repeat;
   background-size: 200px 200px;
-  opacity: 0.5;
-  animation: c-twinkle 5s infinite linear;
+  opacity: 0.6;
+  animation: c-twinkle 5s infinite ease-in-out;
 }
 
 @keyframes c-twinkle {
@@ -1917,7 +1928,7 @@ html.dark-theme .toast {
   left: 50%;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border: 1px dashed rgba(255,255,255,0.05);
   animation: c-orbit-spin linear infinite;
 }
 
@@ -1944,21 +1955,28 @@ html.dark-theme .toast {
 }
 
 .c-planet-body {
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #f59e0b, #cf4500);
-  box-shadow: 0 0 15px rgba(207, 69, 0, 0.6);
+  background: linear-gradient(135deg, rgba(245,158,11,0.8), rgba(207,69,0,0.6));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 8px 32px rgba(207, 69, 0, 0.4), 0 0 20px rgba(245, 158, 11, 0.3);
 }
 
 .c-planet-name {
-  color: #fff;
-  font-size: 0.75em;
+  color: #a5d8ff;
+  font-size: 0.72em;
   margin-top: 8px;
-  background: rgba(0, 0, 0, 0.5);
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
   white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 .c-exp-star {
@@ -1991,10 +2009,13 @@ html.dark-theme .toast {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 4px 8px;
-  border-radius: 8px;
-  border: 1px solid rgba(139, 92, 246, 0.3);
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(165,216,255,0.2);
+  padding: 5px 10px;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
 }
 
 .c-meteor {
@@ -2004,13 +2025,14 @@ html.dark-theme .toast {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  padding: 4px 12px;
-  border-radius: 20px;
-  backdrop-filter: blur(5px);
-  border: 1px solid rgba(165, 216, 255, 0.3);
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+  padding: 5px 14px;
+  border-radius: 24px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(165, 216, 255, 0.2);
   animation: c-shoot 15s linear infinite;
-  box-shadow: 0 0 15px rgba(165, 216, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 20px rgba(165, 216, 255, 0.15);
 }
 
 @keyframes c-shoot {
@@ -2034,9 +2056,10 @@ html.dark-theme .toast {
 }
 
 .c-meteor-name {
-  color: #fff;
+  color: #a5d8ff;
   font-size: 0.8em;
   font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .c-tail {
@@ -2134,14 +2157,26 @@ html.dark-theme .toast {
   width: 90px;
   height: 90px;
   z-index: 10;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.2);
+  box-shadow: 0 0 30px rgba(165, 216, 255, 0.4), 0 0 60px rgba(165, 216, 255, 0.15), inset 0 0 15px rgba(255,255,255,0.05);
+  animation: avatar-pulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes avatar-pulse {
+  0% { box-shadow: 0 0 25px rgba(165, 216, 255, 0.3), 0 0 50px rgba(165, 216, 255, 0.1); }
+  100% { box-shadow: 0 0 45px rgba(165, 216, 255, 0.6), 0 0 90px rgba(165, 216, 255, 0.25); }
 }
 
 .c-avatar-center-3d img {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 3px solid #fff;
-  box-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 20px rgba(165, 216, 255, 0.5);
 }
 
 .c-3d-meteor {
@@ -2168,14 +2203,17 @@ html.dark-theme .toast {
 }
 
 .c-3d-meteor .c-meteor-name {
-  color: #fff;
-  font-size: 0.8em;
-  font-weight: bold;
-  background: rgba(0, 0, 0, 0.6);
-  padding: 3px 6px;
-  border-radius: 6px;
+  color: #a5d8ff;
+  font-size: 0.78em;
+  font-weight: 600;
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  padding: 3px 9px;
+  border-radius: 10px;
   margin-top: 6px;
-  border: 1px solid rgba(165, 216, 255, 0.3);
+  border: 1px solid rgba(165, 216, 255, 0.2);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
 
 /* GitHub Nebula */
