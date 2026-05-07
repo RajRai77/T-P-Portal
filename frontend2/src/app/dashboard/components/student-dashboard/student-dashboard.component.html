@@ -286,73 +286,26 @@
                 </div>
 
                 
-                <div *ngSwitchCase="'projects'">
-                  <h3>Projects</h3>
-                  <div *ngFor="let proj of resumeProjects; let i=index; trackBy: trackByIndex" class="dynamic-entry-box drag-item"
-                    draggable="true" (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
-                    (drop)="onSectionDrop(resumeProjects, $event)" [class.drag-over]="dragoverIndex===i">
-                    <div class="drag-handle" title="Drag to reorder inner"><svg class="inline-icon" viewBox="0 0 24 24">
-                        <circle cx="9" cy="12" r="1" /><circle cx="9" cy="5" r="1" /><circle cx="9" cy="19" r="1" />
-                        <circle cx="15" cy="12" r="1" /><circle cx="15" cy="5" r="1" /><circle cx="15" cy="19" r="1" />
-                      </svg></div>
-                    <button class="close-btn" (click)="removeResumeProject(i)" title="Delete"
-                      style="position:absolute; top:8px; right:12px; font-size:1.6rem; color:#dc2626;"><svg
-                        class="inline-icon" viewBox="0 0 24 24">
-                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                      </svg></button>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem; width: 90%;">
-                      <input type="text" class="ai-input" placeholder="Project Title" [(ngModel)]="proj.title">
-                      <input type="text" class="ai-input" placeholder="Tech Stack" [(ngModel)]="proj.techStack">
-                    </div>
-                    <input type="text" class="ai-input w-full" placeholder="Project Link" [(ngModel)]="proj.link"
-                      style="margin-bottom:0.75rem">
-                    <textarea class="ai-input w-full" rows="2" placeholder="Description" [(ngModel)]="proj.description"></textarea>
-                  </div>
-                  <button class="btn-ghost-sm" (click)="addResumeProject()">+ Add Project</button>
-                </div>
-
+                
                 <div *ngSwitchCase="'projects'" class="ai-section-card" style="margin-top:0;">
                   <h3>Projects</h3>
-                  <div *ngFor="let proj of resumeProjects; let i = index; trackBy: trackByIndex" class="dynamic-entry-box drag-item"
-                    draggable="true" (dragstart)="onSectionDragStart(i)" (dragover)="onSectionDragOver($event, i)"
-                    (drop)="onSectionDrop(resumeProjects, $event)" [class.drag-over]="dragoverIndex===i">
-                    <div class="drag-handle" title="Drag to reorder inner"><svg class="inline-icon" viewBox="0 0 24 24">
-                        <circle cx="9" cy="12" r="1" /><circle cx="9" cy="5" r="1" /><circle cx="9" cy="19" r="1" />
-                        <circle cx="15" cy="12" r="1" /><circle cx="15" cy="5" r="1" /><circle cx="15" cy="19" r="1" />
-                      </svg></div>
-                    <button class="close-btn" (click)="removeResumeProject(i)" title="Delete"
-                      style="position:absolute; top:8px; right:12px; font-size:1.6rem; color:#dc2626;"><svg
-                        class="inline-icon" viewBox="0 0 24 24">
-                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                      </svg></button>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem; width: 90%;">
+                  <div *ngFor="let proj of resumeProjects; let i = index; trackBy: trackByIndex" class="dynamic-entry-box" style="margin-bottom:1rem; padding:1rem; border:1px solid rgba(0,0,0,0.1); border-radius:8px; position:relative;">
+                    <button class="close-btn" (click)="removeResumeProject(i)" style="position:absolute; top:8px; right:8px; color:red; font-weight:bold;">X</button>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.75rem">
                       <input type="text" class="ai-input" placeholder="Project Title" [(ngModel)]="proj.title">
                       <input type="text" class="ai-input" placeholder="Tech Stack" [(ngModel)]="proj.techStack">
                     </div>
-                    <input type="text" class="ai-input w-full" placeholder="Project Link" [(ngModel)]="proj.link"
-                      style="margin-bottom:0.75rem">
+                    <input type="text" class="ai-input w-full" placeholder="Project Link" [(ngModel)]="proj.link" style="margin-bottom:0.75rem">
                     <textarea class="ai-input w-full" rows="2" placeholder="Description" [(ngModel)]="proj.description"></textarea>
                   </div>
                   <button class="btn-ghost-sm" (click)="addResumeProject()">+ Add Project</button>
                 </div>
-
-                <div *ngSwitchCase="'skills'">
+<div *ngSwitchCase="'skills'">
                   <h3>Skills & Tools</h3>
                   <input type="text" class="ai-input w-full" placeholder="e.g. React, Figma, Python" [(ngModel)]="resumeSkills">
                 </div>
 
                 
-                    <div *ngSwitchCase="'projects'">
-                      <div *ngIf="resumeProjects[0]?.title" class="preview-section">
-                        <div class="preview-section-title">PROJECTS</div>
-                        <div *ngFor="let proj of resumeProjects" class="preview-item">
-                          <div class="preview-item-header"><strong>{{proj.title}}</strong><span>{{proj.techStack}}</span></div>
-                          <div class="preview-item-sub">{{proj.link}}</div>
-                          <p class="preview-item-desc">{{proj.description}}</p>
-                        </div>
-                      </div>
-                    </div>
-
                     <div *ngSwitchCase="'education'">
                   <h3>Education</h3>
                   <div *ngFor="let edu of resumeEducations; let i=index; trackBy: trackByIndex" class="dynamic-entry-box drag-item"
@@ -483,7 +436,20 @@
                       </div>
                     </div>
 
-                    <div *ngSwitchCase="'education'">
+                    
+                    <div *ngSwitchCase="'projects'">
+                      <div *ngIf="resumeProjects && resumeProjects.length > 0 && resumeProjects[0]?.title" style="margin-bottom:1rem">
+                        <div class="preview-section-title">PROJECTS</div>
+                        <div *ngFor="let proj of resumeProjects; trackBy: trackByIndex" style="margin-bottom:0.75rem">
+                          <div style="display:flex;justify-content:space-between">
+                            <strong>{{proj.title}}</strong>
+                            <span style="font-size:0.85em;color:var(--resume-primary, #CF4500);font-weight:600;">{{proj.techStack}}</span>
+                          </div>
+                          <p style="color:var(--slate-gray);font-size:0.85em;margin:0.25rem 0 0">{{proj.description}}</p>
+                        </div>
+                      </div>
+                    </div>
+<div *ngSwitchCase="'education'">
                       <div *ngIf="resumeEducations[0]?.degree" class="preview-section">
                         <div class="preview-section-title">EDUCATION</div>
                         <div *ngFor="let edu of resumeEducations" class="preview-item">
