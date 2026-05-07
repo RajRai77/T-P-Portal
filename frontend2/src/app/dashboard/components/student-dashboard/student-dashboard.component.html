@@ -1078,81 +1078,179 @@
       </div>
     </div>
 
-    <!-- TAB: CONSTELLATION VISUALIZER (Three.js WebGL Cinematic) -->
-    <div *ngIf="currentView==='constellation'" style="position:relative; background:#02040a; border-radius:16px; overflow:hidden; height:82vh;">
-      <!-- WebGL Canvas + CSS2D Labels mount point -->
-      <div id="three-canvas-container" style="width:100%; height:100%; position:relative;"></div>
+    <!-- TAB: CONSTELLATION (Concept Art Replica) -->
+    <div *ngIf="currentView==='constellation'" class="pc-root">
+      <!-- Three.js deep-space background -->
+      <div id="three-canvas-container" style="position:absolute;inset:0;"></div>
 
-      <!-- ─── HTML OVERLAY LAYER ─── -->
-      <div style="position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:20;">
+      <!-- ═══════ ALL HTML UI OVERLAY ═══════ -->
 
-        <!-- TOP BAR -->
-        <div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:linear-gradient(to bottom,rgba(2,4,10,0.85),transparent);pointer-events:all;">
-          <button class="btn-ghost" (click)="switchView('edit-profile')"
-            style="color:#a5d8ff;border:1px solid rgba(165,216,255,0.25);background:rgba(0,0,0,0.5);backdrop-filter:blur(10px);font-size:0.85rem;padding:6px 14px;border-radius:20px;">← Edit Profile</button>
+      <!-- TOP-LEFT: Back + Title -->
+      <div class="pc-top-left">
+        <button class="pc-back-btn" (click)="switchView('edit-profile')">← Edit Profile</button>
+        <span class="pc-title">Profile Constellation</span>
+      </div>
 
-          <div style="text-align:center;">
-            <div style="color:#fff;font-size:1rem;font-weight:800;letter-spacing:3px;text-transform:uppercase;text-shadow:0 0 20px rgba(165,216,255,0.6);">Profile Constellation</div>
-            <div style="color:#a5d8ff;font-size:0.72rem;opacity:0.7;letter-spacing:1px;">{{studentData?.name}} · {{studentData?.branch}} · Year {{studentData?.year}}</div>
-          </div>
+      <!-- TOP-CENTER: Profile Completion Ring -->
+      <div class="pc-completion-ring">
+        <svg viewBox="0 0 80 80" width="80" height="80">
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#00e5ff"/>
+              <stop offset="100%" stop-color="#0077ff"/>
+            </linearGradient>
+          </defs>
+          <circle cx="40" cy="40" r="33" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+          <circle cx="40" cy="40" r="33" fill="none" stroke="url(#ringGrad)" stroke-width="5"
+            [attr.stroke-dasharray]="(getProfileCompletion() / 100 * 207) + ' 207'"
+            stroke-linecap="round" transform="rotate(-90 40 40)"/>
+          <text x="40" y="44" text-anchor="middle" fill="#fff" font-size="14" font-weight="800" font-family="Inter,sans-serif">{{getProfileCompletion()}}%</text>
+        </svg>
+        <span class="pc-ring-label">Profile Completion</span>
+      </div>
 
-          <!-- Profile Completion -->
-          <div style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);backdrop-filter:blur(10px);border:1px solid rgba(165,216,255,0.15);border-radius:20px;padding:6px 16px;">
-            <div style="position:relative;width:36px;height:36px;">
-              <svg viewBox="0 0 36 36" style="width:36px;height:36px;transform:rotate(-90deg)">
-                <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="3"/>
-                <circle cx="18" cy="18" r="15" fill="none" stroke="#00e5ff" stroke-width="3" [attr.stroke-dasharray]="getProfileCompletion() + ' 100'" stroke-linecap="round"/>
-              </svg>
-              <span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:0.6rem;font-weight:700;">{{getProfileCompletion()}}%</span>
-            </div>
-            <span style="color:#a5d8ff;font-size:0.75rem;font-weight:600;">Profile<br>Completion</span>
-          </div>
-        </div>
-
-        <!-- RIGHT PANEL: Professional Summary -->
-        <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);width:220px;pointer-events:none;">
-          <div style="background:rgba(255,215,0,0.03);backdrop-filter:blur(12px);border:1px solid rgba(255,215,0,0.15);border-radius:16px;padding:16px;text-align:right;">
-            <div style="color:rgba(255,215,0,0.6);font-size:0.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">e.g., AI Enthusiast &nbsp;&nbsp; Code Sorcerer</div>
-            <div style="color:#fff;font-size:0.95rem;font-weight:300;line-height:1.6;font-style:italic;opacity:0.85;">{{studentData?.bio || 'A brief professional summary...'}}</div>
-            <div style="margin-top:12px;color:rgba(255,215,0,0.5);font-size:0.7rem;font-weight:600;">Code Sorcerer</div>
-          </div>
-          <a *ngIf="editGithub" [href]="editGithub" target="_blank"
-            style="pointer-events:all;display:block;margin-top:12px;background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px 12px;color:#a5d8ff;font-size:0.75rem;text-decoration:none;text-align:center;">
-            ⊕ github.com/{{editGithub | slice:editGithub.lastIndexOf('/')+1 : 999}}
-          </a>
-          <a *ngIf="editLinkedin" [href]="editLinkedin" target="_blank"
-            style="pointer-events:all;display:block;margin-top:8px;background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:8px 12px;color:#a5d8ff;font-size:0.75rem;text-decoration:none;text-align:center;">
-            ⊕ LinkedIn Profile
-          </a>
-        </div>
-
-        <!-- BOTTOM: Skill Portal + Lock-in Button -->
-        <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:10px;width:380px;pointer-events:all;">
-          <div style="background:rgba(2,4,10,0.7);backdrop-filter:blur(16px);border:1px solid rgba(0,229,255,0.2);border-radius:30px;padding:10px 20px;width:100%;display:flex;align-items:center;gap:10px;box-shadow:0 0 30px rgba(0,229,255,0.08);">
-            <span style="color:#00e5ff;font-size:1rem;">⊕</span>
-            <span style="color:#a5d8ff;font-size:0.85rem;letter-spacing:1px;">Skill Portal</span>
-            <span style="color:rgba(165,216,255,0.4);font-size:0.8rem;">Type a skill... (e.g. React, Python, Docker...)</span>
-          </div>
-          <button (click)="switchView('edit-profile')"
-            style="background:linear-gradient(135deg,rgba(0,229,255,0.15),rgba(179,0,255,0.15));backdrop-filter:blur(12px);border:1px solid rgba(0,229,255,0.3);border-radius:30px;padding:12px 40px;color:#fff;font-size:0.9rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;box-shadow:0 0 25px rgba(0,229,255,0.2),inset 0 0 20px rgba(0,229,255,0.05);transition:all 0.3s;">
-            Lock-in your Persona
-          </button>
-          <!-- Social chips -->
-          <div style="display:flex;gap:10px;">
-            <div *ngIf="studentData?.email" style="background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);border:1px solid rgba(165,216,255,0.15);border-radius:16px;padding:5px 12px;color:#a5d8ff;font-size:0.7rem;font-family:monospace;">✉ {{studentData?.email}}</div>
-          </div>
-        </div>
-
-        <!-- Project Modal -->
-        <div *ngIf="activeProject" class="c-project-modal" style="pointer-events:all;z-index:100;" (click)="$event.stopPropagation()">
-          <button class="c-close-btn" (click)="activeProject = null"><svg class="inline-icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-          <h3 style="margin:0 0 0.5rem;color:#00e5ff;">{{activeProject.title || activeProject.role}}</h3>
-          <p style="color:#a5d8ff;font-size:0.8rem;margin:0 0 0.5rem;font-family:monospace;">{{activeProject.techStack || activeProject.company}}</p>
-          <p style="font-size:0.9rem;line-height:1.5;color:#ddd;margin:0 0 1rem;">{{activeProject.description || activeProject.duration}}</p>
-          <a *ngIf="activeProject.link" [href]="activeProject.link" target="_blank"
-            style="display:inline-block;color:#00e5ff;text-decoration:none;border-bottom:1px solid rgba(0,229,255,0.4);">Launch ↗</a>
+      <!-- TOP-RIGHT: Email Vault box -->
+      <div class="pc-vault-box" *ngIf="studentData?.email">
+        <div class="pc-vault-icon">🔒</div>
+        <div>
+          <div class="pc-vault-label">Immutable Verified:</div>
+          <div class="pc-vault-email">{{studentData?.email}}</div>
         </div>
       </div>
+
+      <!-- CENTER: Holographic Avatar + Orbit Rings (pure CSS+SVG) -->
+      <div class="pc-orbit-system">
+        <!-- SVG orbit ellipses -->
+        <svg class="pc-orbit-svg" viewBox="0 0 700 420" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer orbit -->
+          <ellipse cx="350" cy="210" rx="320" ry="90" fill="none" stroke="rgba(0,229,255,0.18)" stroke-width="1" stroke-dasharray="8 5"/>
+          <!-- Mid orbit -->
+          <ellipse cx="350" cy="210" rx="220" ry="65" fill="none" stroke="rgba(0,180,255,0.22)" stroke-width="1" stroke-dasharray="6 4"/>
+          <!-- Inner orbit -->
+          <ellipse cx="350" cy="210" rx="130" ry="42" fill="none" stroke="rgba(100,200,255,0.28)" stroke-width="1" stroke-dasharray="4 3"/>
+          <!-- LinkedIn text along outer orbit -->
+          <defs>
+            <path id="linkedinArc" d="M 30,210 A 320,90 0 0,1 350,120"/>
+          </defs>
+          <text fill="rgba(165,216,255,0.55)" font-size="9" font-family="monospace">
+            <textPath href="#linkedinArc" startOffset="0">{{editLinkedin || 'linkedin.com/in/yourname'}}</textPath>
+          </text>
+          <defs>
+            <path id="githubArc" d="M 670,210 A 320,90 0 0,0 350,120"/>
+          </defs>
+          <text fill="rgba(165,216,255,0.55)" font-size="9" font-family="monospace">
+            <textPath href="#githubArc" startOffset="0">{{editGithub || 'github.com/yourname'}}</textPath>
+          </text>
+        </svg>
+
+        <!-- Holographic Face Avatar (center) -->
+        <div class="pc-avatar-wrap">
+          <div class="pc-avatar-holo">
+            <img [src]="studentData?.profilePicUrl || ('https://api.dicebear.com/7.x/bottts-neutral/svg?seed=' + (studentData?.name || 'User'))"
+              class="pc-avatar-img" alt="Avatar"/>
+            <div class="pc-avatar-scan"></div>
+          </div>
+          <div class="pc-avatar-label">Pulsing Quantum Core</div>
+        </div>
+
+        <!-- GitHub circle node on right orbit -->
+        <a [href]="editGithub || '#'" target="_blank" class="pc-orbit-node pc-github-node">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="white"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        </a>
+
+        <!-- LinkedIn circle node on top -->
+        <a [href]="editLinkedin || '#'" target="_blank" class="pc-orbit-node pc-linkedin-node">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="#0077b5"><rect width="20" height="20" x="2" y="2" rx="5"/><path fill="white" d="M7.5 10H6v8h1.5V10zm-.75-2.5a.875.875 0 1 0 0-1.75.875.875 0 0 0 0 1.75zM18 13.5c0-2-1.1-3.5-3-3.5-.9 0-1.6.4-2 1V10H11.5v8H13v-4.5c0-1 .5-1.5 1.3-1.5.8 0 1.2.5 1.2 1.5V18H17v-4.5z"/></svg>
+        </a>
+      </div>
+
+      <!-- LEFT: Skill icons with logos -->
+      <div class="pc-skills-cloud">
+        <div class="pc-skills-title">⬡ Skills</div>
+        <div class="pc-skills-grid">
+          <div *ngFor="let skill of newSkills | slice:0:9; let i=index" class="pc-skill-chip"
+            [style.animationDelay]="(i*0.15)+'s'">
+            <img [src]="getSkillIcon(skill)" width="18" height="18"
+              onerror="this.style.display='none'" alt=""/>
+            <span>{{skill}}</span>
+          </div>
+        </div>
+        <!-- Spiral galaxy indicator -->
+        <div class="pc-mini-galaxy">
+          <div class="pc-galaxy-dot g1"></div>
+          <div class="pc-galaxy-dot g2"></div>
+          <div class="pc-galaxy-dot g3"></div>
+          <div class="pc-galaxy-dot g4"></div>
+        </div>
+        <span class="pc-skills-footer">Constellation</span>
+      </div>
+
+      <!-- LEFT-MID: Phone Transceiver -->
+      <div class="pc-phone-box" *ngIf="editPhone || studentData?.phone">
+        <div class="pc-antenna-icon">📡</div>
+        <span class="pc-phone-num">{{editPhone || studentData?.phone}}</span>
+      </div>
+
+      <!-- RIGHT: Professional Summary -->
+      <div class="pc-summary-panel">
+        <div class="pc-summary-tags">
+          <span>e.g., AI Enthusiast</span>
+          <span>Code Sorcerer</span>
+        </div>
+        <div class="pc-summary-text">{{studentData?.bio || studentData?.aboutMe || 'A brief professional summary...'}}</div>
+        <div class="pc-summary-role">Code Sorcerer</div>
+        <!-- Golden star decoration -->
+        <div class="pc-gold-stars">
+          <span class="pc-gold-star s1">★</span>
+          <span class="pc-gold-star s2">★</span>
+          <span class="pc-gold-star s3">★</span>
+          <div class="pc-gold-tri"></div>
+        </div>
+      </div>
+
+      <!-- BOTTOM-CENTER: Skill Portal + Lock-in -->
+      <div class="pc-bottom-hub">
+        <div class="pc-skill-portal-label">Skill Portal</div>
+        <div class="pc-skill-portal-box">
+          <span>Type a skill... (e.g. React, Python, Docker...)</span>
+        </div>
+        <button class="pc-lockin-btn" (click)="switchView('edit-profile')">Lock-in your Persona</button>
+      </div>
+
+      <!-- PROJECTS orbiting (bottom, animated) -->
+      <div class="pc-projects-strip" *ngIf="editProjects && editProjects.length > 0">
+        <div *ngFor="let proj of editProjects | slice:0:4; let i=index"
+          class="pc-proj-node"
+          [style.animationDelay]="(i*0.5)+'s'"
+          (click)="activeProject = proj">
+          <div class="pc-proj-dot"></div>
+          <span>{{proj.title}}</span>
+        </div>
+      </div>
+
+      <!-- EXPERIENCE floaters (top-left area) -->
+      <div class="pc-exp-floaters">
+        <div *ngFor="let exp of editExperiences | slice:0:3; let i=index"
+          class="pc-exp-chip" [style.top]="(15 + i*18)+'%'" [style.left]="(3 + i*3)+'%'">
+          <div class="pc-exp-star-icon">✦</div>
+          <div>
+            <div class="pc-exp-role">{{exp.role}}</div>
+            <div class="pc-exp-co">{{exp.company}}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Project detail modal -->
+      <div *ngIf="activeProject" class="c-project-modal" style="z-index:200;" (click)="$event.stopPropagation()">
+        <button class="c-close-btn" (click)="activeProject = null">✕</button>
+        <h3 style="margin:0 0 0.5rem;color:#00e5ff;">{{activeProject.title || activeProject.role}}</h3>
+        <p style="color:#a5d8ff;font-size:0.8rem;margin:0 0 0.5rem;font-family:monospace;">{{activeProject.techStack || activeProject.company}}</p>
+        <p style="font-size:0.9rem;line-height:1.5;color:#ddd;margin:0 0 1rem;">{{activeProject.description || activeProject.duration}}</p>
+        <a *ngIf="activeProject.link" [href]="activeProject.link" target="_blank" style="color:#00e5ff;text-decoration:none;border-bottom:1px solid rgba(0,229,255,0.4);">Launch ↗</a>
+      </div>
+
+      <!-- Click outside to close project modal -->
+      <div *ngIf="activeProject" style="position:absolute;inset:0;z-index:150;" (click)="activeProject=null"></div>
     </div>
 
 

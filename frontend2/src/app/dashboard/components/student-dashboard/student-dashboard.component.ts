@@ -919,7 +919,7 @@ studentSkills=${this.studentData?.skills || ''}
 
     // --- SCENE ---
     this.threeScene = new THREE.Scene();
-    this.threeScene.fog = new THREE.FogExp2(0x02040a, 0.0015);
+    this.threeScene.fog = new THREE.FogExp2(0x020d1a, 0.0012);
 
     // --- CAMERA ---
     this.threeCamera = new THREE.PerspectiveCamera(50, w / h, 0.1, 3000);
@@ -978,8 +978,8 @@ studentSkills=${this.studentData?.skills || ''}
     const arms = 3;
     const spread = 0.45;
     const cInner = new THREE.Color(0xffffff);
-    const cMid   = new THREE.Color(0x00e5ff);
-    const cOuter = new THREE.Color(0x4400aa);
+    const cMid   = new THREE.Color(0x00a0d0);
+    const cOuter = new THREE.Color(0x003366);
 
     for (let i = 0; i < count; i++) {
       const armIdx = i % arms;
