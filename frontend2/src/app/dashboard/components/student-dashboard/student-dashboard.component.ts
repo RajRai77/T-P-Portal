@@ -1,5 +1,6 @@
 import { ToastService } from '../../../shared/services/toast.service';
-import { Component, OnInit, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
+import * as THREE from 'three';
+import { Component, OnInit, AfterViewInit, OnDestroy, ViewChild, ElementRef, AfterViewChecked } from '@angular/core';
 import { StudentDashboardService } from '../../services/student-dashboard.service';
 import { forkJoin } from 'rxjs';
 import { Router } from '@angular/router';
@@ -23,8 +24,18 @@ interface AiInsight {
   styleUrls: ['./student-dashboard.component.css'],
   standalone: false
 })
-export class StudentDashboardComponent implements OnInit, AfterViewChecked {
+export class StudentDashboardComponent implements OnInit, AfterViewInit, AfterViewChecked, OnDestroy {
   isLoading = true;
+
+  // Three.js State
+  private threeRenderer: THREE.WebGLRenderer | null = null;
+  private threeScene: THREE.Scene | null = null;
+  private threeCamera: THREE.PerspectiveCamera | null = null;
+  private threeAnimFrameId: number | null = null;
+  private threeSkillMeshes: { mesh: THREE.Mesh, angle: number, radius: number, speed: number, label: HTMLElement | null }[] = [];
+  private threeProjectMeshes: { mesh: THREE.Mesh, angle: number, radius: number, speed: number, label: HTMLElement | null }[] = [];
+  private threeNebula: THREE.Points | null = null;
+  private threeInitialized = false;
   studentId!: number;
   currentView: View = 'overview';
 
@@ -159,6 +170,12 @@ export class StudentDashboardComponent implements OnInit, AfterViewChecked {
     private dashboardService: StudentDashboardService,
     private router: Router
   ) { }
+
+  ngAfterViewInit(): void {}
+
+  ngOnDestroy(): void {
+    this.destroyThreeJS();
+  }
 
   ngOnInit(): void {
     const token = localStorage.getItem('token');
@@ -320,6 +337,8 @@ export class StudentDashboardComponent implements OnInit, AfterViewChecked {
       setTimeout(() => this.renderCharts(), 100);
     }
     if (view === 'constellation') {
+      this.destroyThreeJS();
+      setTimeout(() => this.initThreeJS(), 150);
       if (!this.newSkills || this.newSkills.length === 0) {
         this.newSkills = [...(this.studentData?.skills || [])];
         this.editProjects = JSON.parse(JSON.stringify(this.studentData?.projects || []));
@@ -870,6 +889,201 @@ studentSkills=${this.studentData?.skills || ''}
         }
       }
     } catch(e) {}
+  }
+
+
+  // ==========================================
+  // THREE.JS CONSTELLATION ENGINE
+  // ==========================================
+
+  initThreeJS(): void {
+    const container = document.getElementById('three-canvas-container');
+    if (!container || this.threeInitialized) return;
+    this.threeInitialized = true;
+    const w = container.clientWidth || 800;
+    const h = container.clientHeight || 600;
+    this.threeScene = new THREE.Scene();
+    this.threeScene.background = new THREE.Color(0x02040a);
+    this.threeCamera = new THREE.PerspectiveCamera(55, w / h, 0.1, 2000);
+    this.threeCamera.position.set(0, 180, 260);
+    this.threeCamera.lookAt(0, 0, 0);
+    this.threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    this.threeRenderer.setPixelRatio(window.devicePixelRatio);
+    this.threeRenderer.setSize(w, h);
+    container.appendChild(this.threeRenderer.domElement);
+    const ambientLight = new THREE.AmbientLight(0x111133, 2);
+    this.threeScene.add(ambientLight);
+    const coreLight = new THREE.PointLight(0xff6600, 8, 200);
+    this.threeScene.add(coreLight);
+    const rimLight = new THREE.PointLight(0x00e5ff, 3, 300);
+    rimLight.position.set(-100, 80, -50);
+    this.threeScene.add(rimLight);
+    const purpleLight = new THREE.PointLight(0xb300ff, 2, 250);
+    purpleLight.position.set(100, -50, -80);
+    this.threeScene.add(purpleLight);
+    this.buildNebula();
+    this.buildCentralAvatar();
+    this.buildOrbitRings();
+    this.buildGridFloor();
+    this.buildSkillNodes();
+    this.buildProjectPlanets();
+    this.animateThreeJS();
+  }
+
+  private buildNebula(): void {
+    const geo = new THREE.BufferGeometry();
+    const count = 6000;
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    const cyan = new THREE.Color(0x00e5ff);
+    const purple = new THREE.Color(0xb300ff);
+    const white = new THREE.Color(0xffffff);
+    for (let i = 0; i < count; i++) {
+      const r = 300 + Math.random() * 500;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.35;
+      positions[i * 3 + 2] = r * Math.cos(phi);
+      const mix = Math.random();
+      const c = mix < 0.4 ? cyan : mix < 0.7 ? purple : white;
+      colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const mat = new THREE.PointsMaterial({ size: 1.6, vertexColors: true, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.75 });
+    this.threeNebula = new THREE.Points(geo, mat);
+    this.threeScene!.add(this.threeNebula);
+  }
+
+  private buildCentralAvatar(): void {
+    const icoGeo = new THREE.IcosahedronGeometry(18, 1);
+    const wireGeo = new THREE.WireframeGeometry(icoGeo);
+    const wireMat = new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.4 });
+    this.threeScene!.add(new THREE.LineSegments(wireGeo, wireMat));
+    const sphereGeo = new THREE.SphereGeometry(22, 32, 32);
+    const sphereMat = new THREE.MeshPhongMaterial({ color: 0xff6600, emissive: 0xff3300, emissiveIntensity: 0.6, transparent: true, opacity: 0.15 });
+    this.threeScene!.add(new THREE.Mesh(sphereGeo, sphereMat));
+    const coreDot = new THREE.Mesh(new THREE.SphereGeometry(5, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffa500 }));
+    this.threeScene!.add(coreDot);
+  }
+
+  private buildOrbitRings(): void {
+    const radii = [55, 95, 140];
+    const colors = [0x00e5ff, 0xb300ff, 0x00ff99];
+    for (let ri = 0; ri < radii.length; ri++) {
+      const ring = new THREE.Mesh(new THREE.RingGeometry(radii[ri] - 0.4, radii[ri] + 0.4, 128), new THREE.MeshBasicMaterial({ color: colors[ri], side: THREE.DoubleSide, transparent: true, opacity: 0.15 }));
+      ring.rotation.x = -Math.PI / 2;
+      this.threeScene!.add(ring);
+    }
+  }
+
+  private buildGridFloor(): void {
+    const gridHelper = new THREE.GridHelper(600, 30, 0x00e5ff, 0x001133);
+    gridHelper.position.y = -40;
+    (gridHelper.material as THREE.Material).opacity = 0.2;
+    (gridHelper.material as THREE.Material).transparent = true;
+    this.threeScene!.add(gridHelper);
+  }
+
+  private buildSkillNodes(): void {
+    const skills = this.newSkills.length > 0 ? this.newSkills : (this.studentData?.skills || '').split(',').map((s: string) => s.trim()).filter((s: string) => s);
+    const labelsContainer = document.getElementById('three-labels');
+    const radius = 55;
+    const palette = [0x00e5ff, 0xffd700, 0xff6600, 0xb300ff, 0x00ff99, 0xff0066];
+    skills.forEach((skill: string, i: number) => {
+      const angle = (i / skills.length) * Math.PI * 2;
+      const geo = new THREE.OctahedronGeometry(4 + Math.random() * 3, 0);
+      const mat = new THREE.MeshPhongMaterial({ color: palette[i % palette.length], emissive: palette[i % palette.length], emissiveIntensity: 0.5, transparent: true, opacity: 0.9 });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(Math.cos(angle) * radius, 5, Math.sin(angle) * radius);
+      this.threeScene!.add(mesh);
+      let label: HTMLElement | null = null;
+      if (labelsContainer) {
+        label = document.createElement('div');
+        label.textContent = skill;
+        label.style.cssText = 'position:absolute;color:#a5d8ff;font-size:10px;font-weight:700;font-family:monospace;background:rgba(0,5,20,0.7);border:1px solid rgba(165,216,255,0.3);border-radius:10px;padding:2px 7px;pointer-events:none;white-space:nowrap;letter-spacing:0.5px;';
+        labelsContainer.appendChild(label);
+      }
+      this.threeSkillMeshes.push({ mesh, angle, radius, speed: 0.004 + i * 0.0005, label });
+    });
+  }
+
+  private buildProjectPlanets(): void {
+    const projects = Array.isArray(this.editProjects) ? this.editProjects : [];
+    const labelsContainer = document.getElementById('three-labels');
+    const radius = 95;
+    const palette = [0xff6600, 0x8b5cf6, 0x10b981, 0xf59e0b];
+    projects.forEach((proj: any, i: number) => {
+      const angle = (i / Math.max(projects.length, 1)) * Math.PI * 2;
+      const size = 8 + Math.random() * 5;
+      const mat = new THREE.MeshPhongMaterial({ color: palette[i % palette.length], emissive: palette[i % palette.length], emissiveIntensity: 0.3, shininess: 80 });
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(size, 20, 20), mat);
+      mesh.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(size * 1.5, 0.8, 6, 40), new THREE.MeshBasicMaterial({ color: palette[i % palette.length], transparent: true, opacity: 0.4 }));
+      ring.rotation.x = Math.PI / 3;
+      mesh.add(ring);
+      this.threeScene!.add(mesh);
+      let label: HTMLElement | null = null;
+      if (labelsContainer) {
+        label = document.createElement('div');
+        label.textContent = proj.title || 'Project';
+        label.style.cssText = 'position:absolute;color:#ffd700;font-size:11px;font-weight:700;font-family:Inter,sans-serif;background:rgba(0,5,20,0.8);border:1px solid rgba(255,215,0,0.3);border-radius:10px;padding:3px 9px;pointer-events:none;white-space:nowrap;';
+        labelsContainer.appendChild(label);
+      }
+      this.threeProjectMeshes.push({ mesh, angle, radius, speed: 0.002 + i * 0.0003, label });
+    });
+  }
+
+  private animateThreeJS(): void {
+    this.threeAnimFrameId = requestAnimationFrame(() => this.animateThreeJS());
+    const t = Date.now() * 0.001;
+    if (this.threeNebula) this.threeNebula.rotation.y = t * 0.02;
+    this.threeSkillMeshes.forEach(item => {
+      item.angle += item.speed;
+      item.mesh.position.x = Math.cos(item.angle) * item.radius;
+      item.mesh.position.z = Math.sin(item.angle) * item.radius;
+      item.mesh.position.y = 5 + Math.sin(t * 1.2 + item.angle) * 8;
+      item.mesh.rotation.y += 0.02;
+      this.updateLabel(item.label, item.mesh.position);
+    });
+    this.threeProjectMeshes.forEach(item => {
+      item.angle += item.speed;
+      item.mesh.position.x = Math.cos(item.angle) * item.radius;
+      item.mesh.position.z = Math.sin(item.angle) * item.radius;
+      item.mesh.position.y = Math.sin(t * 0.8 + item.angle) * 12;
+      item.mesh.rotation.y += 0.01;
+      this.updateLabel(item.label, item.mesh.position);
+    });
+    if (this.threeRenderer && this.threeScene && this.threeCamera) {
+      this.threeRenderer.render(this.threeScene, this.threeCamera);
+    }
+  }
+
+  private updateLabel(label: HTMLElement | null, position: THREE.Vector3): void {
+    if (!label || !this.threeCamera || !this.threeRenderer) return;
+    const vec = position.clone().project(this.threeCamera);
+    const canvas = this.threeRenderer.domElement;
+    const x = (vec.x * 0.5 + 0.5) * canvas.clientWidth;
+    const y = (-vec.y * 0.5 + 0.5) * canvas.clientHeight;
+    if (vec.z > 1) { label.style.display = 'none'; return; }
+    label.style.display = 'block';
+    label.style.left = (x - label.offsetWidth / 2) + 'px';
+    label.style.top = (y + 12) + 'px';
+  }
+
+  destroyThreeJS(): void {
+    if (this.threeAnimFrameId !== null) { cancelAnimationFrame(this.threeAnimFrameId); this.threeAnimFrameId = null; }
+    if (this.threeRenderer) {
+      this.threeRenderer.dispose();
+      const c = document.getElementById('three-canvas-container');
+      if (c && this.threeRenderer.domElement.parentNode === c) c.removeChild(this.threeRenderer.domElement);
+      this.threeRenderer = null;
+    }
+    const lc = document.getElementById('three-labels');
+    if (lc) lc.innerHTML = '';
+    this.threeScene = null; this.threeCamera = null; this.threeNebula = null;
+    this.threeSkillMeshes = []; this.threeProjectMeshes = []; this.threeInitialized = false;
   }
 
   logout(): void {

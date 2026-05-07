@@ -1078,118 +1078,49 @@
       </div>
     </div>
 
-    <!-- TAB: CONSTELLATION VISUALIZER -->
-    <div *ngIf="currentView==='constellation'" class="constellation-wrapper" (click)="activeProject = null">
-      <button class="btn-ghost" (click)="switchView('edit-profile')"
-        style="position:absolute;top:20px;left:20px;z-index:100;color:#fff;border:1px solid rgba(255,255,255,0.3);background:rgba(0,0,0,0.5);">←
-        Back to Form</button>
+    <!-- TAB: CONSTELLATION VISUALIZER (Three.js WebGL) -->
+    <div *ngIf="currentView==='constellation'" class="constellation-wrapper" style="position:relative; background:#02040a; border-radius:16px; overflow:hidden; height:82vh;">
+      <!-- WebGL Canvas Container -->
+      <div id="three-canvas-container" style="width:100%; height:100%;"></div>
 
-      <div class="constellation-stars"></div>
-      <div class="constellation-header">
-        <h1 style="background:none; -webkit-text-fill-color:#fff;">Persona Constellation</h1>
-      </div>
+      <!-- HTML Overlay -->
+      <div style="position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;z-index:10;">
+        <!-- Back Button -->
+        <button class="btn-ghost" (click)="switchView('edit-profile')"
+          style="position:absolute;top:16px;left:16px;pointer-events:all;color:#a5d8ff;border:1px solid rgba(165,216,255,0.3);background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);">← Back to Form</button>
 
-      <!-- Isometric Skills Galaxy -->
-      <div class="c-skill-grid">
-        <div class="c-spiral-galaxy"></div>
-        <div class="c-avatar-center-3d">
-          <img
-            [src]="studentData?.profilePicUrl || 'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=' + (studentData?.name || 'User')"
-            alt="Avatar">
+        <!-- Title -->
+        <div style="position:absolute;top:16px;left:50%;transform:translateX(-50%);text-align:center;pointer-events:none;">
+          <h2 style="color:#fff;margin:0;font-size:1.2rem;font-weight:700;letter-spacing:2px;text-shadow:0 0 20px rgba(165,216,255,0.5);">PERSONA CONSTELLATION</h2>
+          <p style="color:#a5d8ff;margin:0;font-size:0.75rem;opacity:0.7;">{{studentData?.name}} · {{studentData?.branch}}</p>
         </div>
-        <!-- Orbiting skills in 3D -->
-        <div class="c-3d-meteor" *ngFor="let skill of newSkills; let i = index" [style.animationDelay.s]="i * -2">
-          <img [src]="getSkillIcon(skill)" width="24" height="24" onerror="this.style.display='none'">
-          <span class="c-meteor-name">{{skill}}</span>
+
+        <!-- Skill Labels - rendered by Three.js into threeLabels container -->
+        <div id="three-labels" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></div>
+
+        <!-- Project Modal -->
+        <div *ngIf="activeProject" class="c-project-modal" style="pointer-events:all;" (click)="$event.stopPropagation()">
+          <button class="c-close-btn" (click)="activeProject = null"><svg class="inline-icon" viewBox="0 0 24 24">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg></button>
+          <h3 style="margin:0 0 0.5rem;color:#CF4500;">{{activeProject.title}}</h3>
+          <p style="color:#a5d8ff;font-size:0.8rem;margin:0 0 1rem;font-family:monospace;">{{activeProject.techStack}}</p>
+          <p style="font-size:0.9rem;line-height:1.5;color:#ddd;">{{activeProject.description}}</p>
+          <a *ngIf="activeProject.link" [href]="activeProject.link" target="_blank"
+            style="display:inline-block;margin-top:1rem;color:#fff;text-decoration:none;border-bottom:1px solid rgba(255,255,255,0.4);">Launch Project ↗</a>
         </div>
-      </div>
 
-      <!-- GitHub Nebula -->
-      <a *ngIf="editGithub" [href]="editGithub" target="_blank" class="c-nebula">
-        <span>GitHub Profile</span>
-      </a>
-
-      <!-- LinkedIn Relay Station -->
-      <a *ngIf="editLinkedin" [href]="editLinkedin" target="_blank" class="c-relay-station">
-        <div class="c-relay-beam"></div>
-        <span style="font-weight:bold; color:#fff; z-index:2;">LinkedIn</span>
-        <small
-          style="font-size:0.6rem;text-align:center;color:#a5d8ff;word-break:break-all;margin-top:4px;z-index:2;">{{editLinkedin}}</small>
-      </a>
-
-      <!-- Phone Transceiver -->
-      <div class="c-transceiver" *ngIf="editPhone">
-        <div class="c-antenna">
-          <div class="c-signal"></div>
+        <!-- Bottom Info Strip -->
+        <div style="position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:1.5rem;pointer-events:none;">
+          <div *ngIf="studentData?.email" style="background:rgba(255,255,255,0.05);backdrop-filter:blur(8px);border:1px solid rgba(165,216,255,0.2);border-radius:20px;padding:6px 16px;color:#a5d8ff;font-size:0.75rem;font-family:monospace;">
+            ✉ {{studentData?.email}}
+          </div>
+          <a *ngIf="editGithub" [href]="editGithub" target="_blank" style="pointer-events:all;background:rgba(255,255,255,0.05);backdrop-filter:blur(8px);border:1px solid rgba(165,216,255,0.2);border-radius:20px;padding:6px 16px;color:#a5d8ff;font-size:0.75rem;text-decoration:none;">
+            ⊕ GitHub
+          </a>
+          <a *ngIf="editLinkedin" [href]="editLinkedin" target="_blank" style="pointer-events:all;background:rgba(255,255,255,0.05);backdrop-filter:blur(8px);border:1px solid rgba(165,216,255,0.2);border-radius:20px;padding:6px 16px;color:#a5d8ff;font-size:0.75rem;text-decoration:none;">
+            ⊕ LinkedIn
+          </a>
         </div>
-        <div
-          style="margin-left:15px; color:#CF4500; font-family:monospace; font-weight:bold; font-size:1.1rem; text-shadow: 0 0 10px rgba(207,69,0,0.8);">
-          {{editPhone}}
-        </div>
-      </div>
-
-      <!-- Email Vault -->
-      <div class="c-vault">
-        <div class="c-vault-lock"><svg class="inline-icon" viewBox="0 0 24 24">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-          </svg></div>
-        <span style="font-size:0.7rem; color:#a5d8ff; font-weight:600; text-transform:uppercase;">Verified Crystalline
-          Vault</span>
-        <span
-          style="font-size:0.85rem; color:#fff; margin-top:4px; font-family:monospace;">{{studentData?.email}}</span>
-      </div>
-
-      <!-- Algorithm Trove -->
-      <div class="c-algo-trove">
-        <div class="c-quantum-core"></div>
-        <div class="c-algo-shape" style="top:0; left:35px; animation: c-orbit-shape 4s linear infinite;"><img
-            src="https://upload.wikimedia.org/wikipedia/commons/1/19/LeetCode_logo_black.png" width="16" height="16"
-            onerror="this.style.display='none'"></div>
-        <div class="c-algo-shape" style="top:60px; left:0; animation: c-orbit-shape 4s linear infinite -1.3s;"><img
-            src="https://upload.wikimedia.org/wikipedia/commons/4/40/HackerRank_Icon-1000px.png" width="16" height="16"
-            onerror="this.style.display='none'"></div>
-        <div class="c-algo-shape" style="top:60px; left:70px; animation: c-orbit-shape 4s linear infinite -2.6s;"><span
-            style="color:#CF4500; font-weight:bold; font-size:10px;">CF</span></div>
-      </div>
-
-      <!-- Experience as Stars -->
-      <div class="c-exp-star" *ngFor="let exp of editExperiences; let i = index" [style.top.%]="10 + (i * 25) % 70"
-        [style.left.%]="15 + (i * 30) % 80">
-        <div class="c-star-core"></div>
-        <div class="c-star-glow"></div>
-        <div class="c-exp-details">
-          <strong style="color:#fff; font-size:0.9rem;">{{exp.role}}</strong>
-          <span style="color:#a5d8ff; font-size:0.75rem;">{{exp.company}}</span>
-        </div>
-      </div>
-
-      <!-- Projects as Planets -->
-      <div class="c-planet-orbit" *ngFor="let proj of editProjects; let i = index" [style.width.px]="400 + (i * 120)"
-        [style.height.px]="400 + (i * 120)" [style.animationDuration.s]="15 + (i * 8)">
-        <div class="c-planet" (click)="activeProject = proj; $event.stopPropagation()">
-          <div class="c-planet-body"></div>
-          <span class="c-planet-name">{{proj.title}}</span>
-        </div>
-      </div>
-
-      <!-- Active Project Modal -->
-      <div class="c-project-modal" *ngIf="activeProject" (click)="$event.stopPropagation()">
-        <button class="c-close-btn" (click)="activeProject = null"><svg class="inline-icon" viewBox="0 0 24 24">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg></button>
-        <h3 style="margin:0 0 0.5rem;color:#CF4500;">{{activeProject.title}}</h3>
-        <p style="color:#a5d8ff;font-size:0.8rem;margin:0 0 1rem;font-family:monospace;">{{activeProject.techStack}}</p>
-        <p style="font-size:0.9rem;line-height:1.5;color:#ddd;">{{activeProject.description}}</p>
-        <a *ngIf="activeProject.link" [href]="activeProject.link" target="_blank"
-          style="display:inline-block;margin-top:1rem;color:#fff;text-decoration:none;border-bottom:1px solid #fff;">Launch
-          Project <svg class="inline-icon" viewBox="0 0 24 24">
-            <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
-            <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
-            <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
-            <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
-          </svg></a>
       </div>
     </div>
 
