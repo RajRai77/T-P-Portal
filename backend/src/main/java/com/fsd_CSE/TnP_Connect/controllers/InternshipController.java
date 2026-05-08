@@ -4,6 +4,8 @@ import com.fsd_CSE.TnP_Connect.Response.Internship.InternshipResponse;
 import com.fsd_CSE.TnP_Connect.Response.student.StudentApplicantSummary;
 import com.fsd_CSE.TnP_Connect.Repository.InternshipRepository;
 import com.fsd_CSE.TnP_Connect.Repository.TnPAdminRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,13 +19,13 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 @RestController
 @RequestMapping("/api/internships")
 public class InternshipController {
 
     @Autowired private InternshipRepository internshipRepository;
     @Autowired private TnPAdminRepository tnpAdminRepository;
+    @Autowired private EntityManager entityManager;
 
     private static final Logger log = LoggerFactory.getLogger(InternshipController.class);
 
@@ -84,15 +86,27 @@ public class InternshipController {
 
     //   4: Delete Internship
     @DeleteMapping("/{id}")
+    @Transactional
     public ResponseEntity<Void> deleteInternship(@PathVariable Integer id) {
         log.warn("Attempting to delete internship with ID: {}", id);
 
-        if(!internshipRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Internship not found with ID: " + id);
-        }
-        internshipRepository.deleteById(id);
-        log.info("Deleted internship with ID: {}", id);
+        // STEP 1: Delete all child applications directly via JPQL, bypassing
+        // Hibernate cascade state issues (same fix as Session delete)
+        entityManager.createQuery("DELETE FROM InternshipApplication ia WHERE ia.internship.id = :internshipId")
+                .setParameter("internshipId", id)
+                .executeUpdate();
 
+        // STEP 2: Fetch the internship now that it has no child rows holding it back
+        Internship internship = internshipRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Internship not found with ID: " + id));
+
+        // STEP 3: Detach from Admin safely
+        internship.setCreatedByAdmin(null);
+
+        // STEP 4: Delete the internship peacefully
+        internshipRepository.delete(internship);
+
+        log.info("Successfully deleted internship with ID: {}", id);
         return ResponseEntity.noContent().build();
     }
 
